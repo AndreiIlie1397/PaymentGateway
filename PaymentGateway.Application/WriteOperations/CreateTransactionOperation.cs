@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOperations
 {
-    public class CreateTransaction
+    public class CreateTransactionOperation
     {
     }
 }

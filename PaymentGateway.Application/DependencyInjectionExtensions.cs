@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application.WriteOperations;
 
@@ -10,12 +9,13 @@ namespace PaymentGateway.Application
         public static IServiceCollection RegisterBusinessServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddTransient<EnrollCustomerOperation>();
-            services.AddTransient<CreateAccount>();
-            services.AddTransient<DepositMoney>();
-            services.AddTransient<WithdrawMoney>();
-            services.AddTransient<PurchaseProduct>();
+            services.AddTransient<CreateAccountOperation>();
+            services.AddTransient<DepositMoneyOperation>();
+            services.AddTransient<WithdrawMoneyOperation>();
+            services.AddTransient<CreateProductOperation>();
+            services.AddTransient<PurchaseProductOperation>();
 
-            services.AddTransient<Data.Database>();
+            services.AddSingleton<Data.Database>();
 
             services.AddSingleton(sp =>
             {

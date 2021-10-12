@@ -9,35 +9,53 @@ using System.Linq;
 
 namespace PaymentGateway.Application.WriteOperations
 {
-    public class PurchaseProduct : IWriteOperation<PurchaseProductCommand>
+    public class PurchaseProductOperation : IWriteOperation<PurchaseProductCommand>
     {
         private readonly IEventSender _eventSender;
 
-        public PurchaseProduct(IEventSender eventSender)
+        public PurchaseProductOperation(IEventSender eventSender)
         {
             _eventSender = eventSender;
         }
 
-        public void PerformOperation(PurchaseProductCommand operation, Database database)
+        public void PerformOperation(PurchaseProductCommand operation)
         {
+            Database database = Database.GetInstance();
             double totalAmount = 0.0;
 
-            Account account = database.GetAccountByIban(operation.Iban);
-            if (account == null)
+            Account account;
+            Product product;
+
+            if (operation.PersonId.HasValue)
+            {
+                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
+            } else
+            {
+                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
+            }
+
+            if(account == null)
             {
                 throw new Exception("Account not found");
             }
 
+
+
+
+
+
+
+
+
             foreach (var item in operation.ProductDetails)
             {
-
-                var product = database.Product.FirstOrDefault(x => x.Id == item.ProductId);
+                product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
 
                 if (product.Limit < item.Quantity)
                 {
                     throw new Exception("Insufficient stocks!");
                 }
-                product.Limit -= item.Quantity;
+                product.Limit = product.Limit - item.Quantity;
 
                 totalAmount += item.Quantity * product.Value;
             }
@@ -50,11 +68,11 @@ namespace PaymentGateway.Application.WriteOperations
             Transaction transaction = new Transaction();
             transaction.Amount = -totalAmount;
             database.Transactions.Add(transaction);
-            account.Balance -= totalAmount;
+            account.Balance = account.Balance - totalAmount;
 
             foreach (var item in operation.ProductDetails)
             {
-                var product = database.Product.FirstOrDefault(x => x.Id == item.ProductId);
+                product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
                 ProductXTransaction productXTransaction = new ProductXTransaction();
                 productXTransaction.TransactionId = transaction.Id;
                 productXTransaction.ProductId = item.ProductId;
@@ -65,19 +83,8 @@ namespace PaymentGateway.Application.WriteOperations
 
             ProductPurchased eventProductPurchased = new ProductPurchased { ProductDetails = operation.ProductDetails };
             _eventSender.SendEvent(eventProductPurchased);
+
             database.SaveChanges();
-
-
-
-
-
-
-
-            database.Transactions.Add(transaction);
-            database.SaveChanges();
-
-
-
         }
     }
 }

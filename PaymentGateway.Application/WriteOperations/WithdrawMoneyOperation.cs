@@ -5,32 +5,29 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using PaymentGateway.PublishedLanguage.Events;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOperations
 {
-    public class WithdrawMoney : IWriteOperation<WithdrawMoneyCommand>
+    public class WithdrawMoneyOperation : IWriteOperation<WithdrawMoneyCommand>
     {
         private readonly IEventSender _eventSender;
-        public WithdrawMoney(IEventSender eventSender)
+        public WithdrawMoneyOperation(IEventSender eventSender)
         {
             _eventSender = eventSender;
         }
-        public void PerformOperation(WithdrawMoneyCommand operation, Database database)
-        { 
-
+        public void PerformOperation(WithdrawMoneyCommand operation)
+        {
+            Database database = Database.GetInstance();
             Account account;
 
             if (operation.AccountId.HasValue)
             {
-                account = database.Account.FirstOrDefault(x => x.Id == operation.AccountId);
+                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
             }
             else
             {
-                account = database.Account.FirstOrDefault(x => x.IbanCode == operation.Iban);
+                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
             }
             if (account == null)
             {
@@ -44,19 +41,21 @@ namespace PaymentGateway.Application.WriteOperations
 
             Transaction transaction = new Transaction();
             transaction.Currency = operation.Currency;
-            transaction.Amount = operation.Value;
+            transaction.Amount = -operation.Value;
             transaction.Type = TransactionType.Withdraw;
-            transaction.Date = DateTime.Now;
+            transaction.Date = operation.DateOfTransaction;
 
             account.Balance = account.Balance - operation.Value;
 
             database.Transactions.Add(transaction);
-            database.SaveChanges();
+
+            TransactionCreated transactionCreated = new(operation.Value, operation.Currency, operation.DateOfTransaction);
+            _eventSender.SendEvent(transactionCreated);
 
             WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
             _eventSender.SendEvent(withdrawCreated);
+
+            database.SaveChanges();   
         }
-
-
     }
 }

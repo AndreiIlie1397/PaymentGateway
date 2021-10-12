@@ -1,10 +1,7 @@
 ﻿using Abstractions;
 using System;
 using PaymentGateway.PublishedLanguage.WriteSide;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using PaymentGateway.Abstractions;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
@@ -12,25 +9,26 @@ using PaymentGateway.PublishedLanguage.Events;
 
 namespace PaymentGateway.Application.WriteOperations
 {
-    public class DepositMoney : IWriteOperation<DepositMoneyCommand>
+    public class DepositMoneyOperation : IWriteOperation<DepositMoneyCommand>
     {
-       
-        public IEventSender _eventSender;
-        public DepositMoney(IEventSender eventSender)
+
+        private readonly IEventSender _eventSender;
+        public DepositMoneyOperation(IEventSender eventSender)
         {
             _eventSender = eventSender;
         }
-        public void PerformOperation(DepositMoneyCommand operation, Database database)
+        public void PerformOperation(DepositMoneyCommand operation)
         {
+            Database database = Database.GetInstance();
             Account account;
 
             if (operation.AccountId.HasValue)
             {
-                account = database.Account.FirstOrDefault(x => x.Id == operation.AccountId);
+                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
             }
             else
             {
-                account = database.Account.FirstOrDefault(x => x.IbanCode == operation.Iban);
+                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
             }
             if (account == null)
             {
@@ -44,27 +42,27 @@ namespace PaymentGateway.Application.WriteOperations
 
             if(!String.IsNullOrEmpty(operation.Currency))
             {
-                account = database.Account.FirstOrDefault(x => x.Currency == operation.Currency);
+                account = database.Accounts.FirstOrDefault(x => x.Currency == operation.Currency);
             }
-           // account.PersonId = account.Id;
-            //account.Balance = account.Balance + operation.Value;
+            account.Id = operation.AccountId;
+            account.Balance = account.Balance + operation.Value;
+            account.IbanCode = operation.Iban;
 
             Transaction transaction = new Transaction();
             transaction.Currency = operation.Currency;
             transaction.Amount = operation.Value;
             transaction.Type = TransactionType.Deposit;
-            transaction.Date = DateTime.Now;
-
-            account.IbanCode = operation.Iban;
+            transaction.Date = operation.DateOfTransaction;
 
             database.Transactions.Add(transaction);
 
-            account.Balance = account.Balance + transaction.Amount;
+            TransactionCreated transactionCreated = new(operation.Value, operation.Currency, operation.DateOfTransaction);
+            _eventSender.SendEvent(transactionCreated);
+
+            DepositCreated depositCreated = new(operation.Iban, account.Balance, account.Currency);
+            _eventSender.SendEvent(depositCreated);
 
             database.SaveChanges();
-
-            DepositCreated depositCreated = new(account.IbanCode, account.Balance, account.Currency);
-            _eventSender.SendEvent(depositCreated);
         }
     }
 }

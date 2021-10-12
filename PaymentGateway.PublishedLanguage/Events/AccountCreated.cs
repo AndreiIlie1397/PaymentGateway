@@ -9,16 +9,14 @@ namespace PaymentGateway.PublishedLanguage.Events
     public class AccountCreated
     {
         public string Iban { get; set; }
-        public string Currency { get; set; }
-        //public string Status { get; set; }
-        public double Balance { get; set; }
+        public string Type { get; set; }
+        public string Status { get; set; }
 
-        public AccountCreated(string iban, string currency, double balance)
+        public AccountCreated(string iban, string type, string status)
         {
             this.Iban = iban;
-            this.Currency = currency;
-           // this.Status = status;
-            this.Balance = balance;
+            this.Type = status;
+            this.Status = status;
         }
     }
 }

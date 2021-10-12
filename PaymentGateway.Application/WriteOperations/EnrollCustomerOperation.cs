@@ -12,14 +12,15 @@ namespace PaymentGateway.Application.WriteOperations
     {
         private readonly IEventSender _eventSender;
 
-
         public EnrollCustomerOperation(IEventSender eventSender)
         {
             _eventSender = eventSender;
         }
-        public void PerformOperation(EnrollCustomerCommand operation, Database database)
+        public void PerformOperation(EnrollCustomerCommand operation)
         {
-           
+            Database database = Database.GetInstance();
+            var random = new Random();
+
             Person person = new Person();
             person.Name = operation.Name;
             person.Cnp = operation.UniqueIdentifier;
@@ -43,13 +44,14 @@ namespace PaymentGateway.Application.WriteOperations
             account.Type = AccountType.Current;
             account.Currency = operation.Currency;
             account.Balance = 0;
-            account.IbanCode = operation.IbanCode;
+            account.IbanCode = random.Next(100000).ToString();
 
-            database.Account.Add(account);
+            database.Accounts.Add(account);
+            
+            CustomerEnrolled eventCustomerEnroll = new(operation.Name, operation.UniqueIdentifier, operation.ClientType, operation.IbanCode);
+            _eventSender.SendEvent(eventCustomerEnroll);
+
             database.SaveChanges();
-
-            CustomerEnrolled eventCustEnroll = new(operation.Name, operation.UniqueIdentifier, operation.ClientType, operation.IbanCode);
-            _eventSender.SendEvent(eventCustEnroll);
         }
     }
 }

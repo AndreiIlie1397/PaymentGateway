@@ -4,7 +4,7 @@ namespace PaymentGateway.Models
 {
     public class Account
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         public double Balance { get; set; }
         public string Currency { get; set; }
         public string IbanCode { get; set; }
@@ -12,6 +12,6 @@ namespace PaymentGateway.Models
         public AccountStatus Status { get; set; }
         public double Limit { get; set; }
 
-        public int PersonId { get; set; }
+        public int? PersonId { get; set; }
     }
 }

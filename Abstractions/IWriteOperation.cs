@@ -5,6 +5,6 @@ namespace Abstractions
 {
     public interface IWriteOperation<T>
     {
-        public void PerformOperation(T operation, Database database);
+        public void PerformOperation(T operation);
     }
 }

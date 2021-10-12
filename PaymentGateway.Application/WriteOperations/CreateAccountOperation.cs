@@ -9,21 +9,21 @@ using System.Linq;
 
 namespace PaymentGateway.Application.WriteOperations
 {
-    public class CreateAccount : IWriteOperation<CreateAccountCommand>
+    public class CreateAccountOperation : IWriteOperation<CreateAccountCommand>
     {
-        // Account account = new Account();
-
         private readonly IEventSender _eventSender;
         private readonly AccountOptions _accountOptions;
-        public CreateAccount(IEventSender eventSender, AccountOptions accountOptions)
+
+        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions)
         {
-           _eventSender = eventSender;
+            _eventSender = eventSender;
             _accountOptions = accountOptions;
         }
 
-        public void PerformOperation(CreateAccountCommand operation, Database database)
+        public void PerformOperation(CreateAccountCommand operation)
         {
-            var Random = new Random();
+            Database database = Database.GetInstance();
+
             Account account = new Account();
             Person person;
 
@@ -33,7 +33,7 @@ namespace PaymentGateway.Application.WriteOperations
             }
             else
             {
-                person = database.Persons.FirstOrDefault(x => x.Cnp == operation.Cnp);
+                person = database.Persons?.FirstOrDefault(x => x.Cnp == operation.Cnp);
             }
             if (person == null)
             {
@@ -47,17 +47,17 @@ namespace PaymentGateway.Application.WriteOperations
             account.Currency = operation.Currency;
             account.IbanCode = operation.IBanCode;
             account.Status = AccountStatus.Active;
-        
 
-            if (operation.AccountType == "Currency")
+
+            if (operation.Type == "Current")
             {
                 account.Type = AccountType.Current;
             }
-            else if (operation.AccountType == "Economy")
+            else if (operation.Type == "Economy")
             {
                 account.Type = AccountType.Economy;
             }
-            else if (operation.AccountType == "Investment")
+            else if (operation.Type == "Investment")
             {
                 account.Type = AccountType.Investment;
             }
@@ -65,11 +65,13 @@ namespace PaymentGateway.Application.WriteOperations
             {
                 throw new Exception("Unsupported account type");
             }
-            database.Account.Add(account);
-            database.SaveChanges();
+            database.Accounts.Add(account);
 
-            AccountCreated accoutCreated = new(account.IbanCode, account.Currency, account.Balance);
+
+            AccountCreated accoutCreated = new(operation.IBanCode, operation.Type, operation.Status.ToString());
             _eventSender.SendEvent(accoutCreated);
+
+            database.SaveChanges();
         }
     }
 }

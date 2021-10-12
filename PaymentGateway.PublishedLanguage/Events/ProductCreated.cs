@@ -8,16 +8,19 @@ namespace PaymentGateway.PublishedLanguage.Events
 {
     public class ProductCreated
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public double Value { get; set; }
         public string Currency { get; set; }
         public int Limit { get; set; }
-       public ProductCreated(string name, double value, string currency, int limit)
+
+        public ProductCreated(int id, string name, double value, string currency, int limit)
         {
-            this.Name = name;
-            this.Value = value;
-            this.Currency = currency;
-            this.Limit = limit;
+            Id = id;
+            Name = name;
+            Value = value;
+            Currency = currency;
+            Limit = limit;
         }
     }
 }

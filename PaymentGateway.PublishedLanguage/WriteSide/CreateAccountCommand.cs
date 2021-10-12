@@ -14,7 +14,7 @@ namespace PaymentGateway.PublishedLanguage.WriteSide
         public double Balance { get; set; }
         public string Currency { get; set; }
         public AccountStatus Status { get; set; }
-        public string AccountType { get; set; }
+        public string Type { get; set; }
         public string Cnp { get; set; }
         
     }

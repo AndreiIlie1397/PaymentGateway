@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup Label="Package Versions">
-
+	  <AutoMapperPackageVersion>10.1.1</AutoMapperPackageVersion>
 	  <AutoMapperExtensionsPackageVersion>8.1.0</AutoMapperExtensionsPackageVersion>
 	  <AzureStorageBlobs>12.6.0</AzureStorageBlobs>
 	  <BenchmarkDotNetPackageVersion>0.10.14</BenchmarkDotNetPackageVersion>
@@ -38,6 +38,5 @@
 	  <SystemSecurityCryptographyPkcs>5.0.1</SystemSecurityCryptographyPkcs>
 	  <XunitPackageVersion>2.4.0</XunitPackageVersion>
 	  <XunitRunnerVisualStudioPackageVersion>2.4.0</XunitRunnerVisualStudioPackageVersion>
-	  <AutoMapperPackageVersion>10.1.1</AutoMapperPackageVersion>
   </PropertyGroup>
 </Project>

@@ -9,8 +9,8 @@ namespace PaymentGateway.WebApi.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly CreateAccount _createAccountCommandHandler;
-        public AccountController(CreateAccount createAccountCommandHandler)
+        private readonly CreateAccountOperation _createAccountCommandHandler;
+        public AccountController(CreateAccountOperation createAccountCommandHandler)
         {
             _createAccountCommandHandler = createAccountCommandHandler;
         }
@@ -19,7 +19,7 @@ namespace PaymentGateway.WebApi.Controllers
         public string CreateAccount(CreateAccountCommand command)
         {
             Database db = new Database();
-            _createAccountCommandHandler.PerformOperation(command, db);
+            _createAccountCommandHandler.PerformOperation(command);
             return "ok";
         }
     }

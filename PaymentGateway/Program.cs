@@ -5,6 +5,7 @@ using PaymentGateway.Application;
 using PaymentGateway.Application.WriteOperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
+using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace PaymentGateway
         static IConfiguration Configuration;
         static void Main(string[] args)
         {
-            Database db = new Database();
+            Database database = new Database();
 
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -49,7 +50,7 @@ namespace PaymentGateway
 
 
             var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
-            client.PerformOperation(command, db);
+            client.PerformOperation(command);
 
 
 
@@ -63,7 +64,7 @@ namespace PaymentGateway
                 PersonId = 0,
                 Currency = "RON",
                 Cnp = "197231456445",
-                AccountType = "Current",
+                Type = "Current",
                 IBanCode = "RO12INGB1234567890"
             };
 
@@ -72,7 +73,7 @@ namespace PaymentGateway
             Console.WriteLine("Person Id: " + account.PersonId);
             Console.WriteLine("CNP: " + account.Cnp);
             Console.WriteLine("Balance: " + account.Balance);
-            Console.WriteLine("Account Type: " + account.AccountType);
+            Console.WriteLine("Account Type: " + account.Type);
             Console.WriteLine("Currency: " + account.Currency);
             Console.WriteLine("Status account: " + account.Status);
             Console.WriteLine("IBAN: " + account.IBanCode);
@@ -88,8 +89,8 @@ namespace PaymentGateway
             });
 
 
-            CreateAccount acc = serviceProvider.GetRequiredService<CreateAccount>();
-            acc.PerformOperation(account, db);
+            CreateAccountOperation acc = serviceProvider.GetRequiredService<CreateAccountOperation>();
+            acc.PerformOperation(account);
 
 
 
@@ -101,7 +102,6 @@ namespace PaymentGateway
             DepositMoneyCommand deposit = new DepositMoneyCommand
             {
                 // deposit.AccountId = 0;
-                Name = "Ilie Andrei",
                 Currency = "RON",
                 Value = 10000,
                 Iban = "RO12INGB1234567890"
@@ -109,13 +109,12 @@ namespace PaymentGateway
 
             Console.WriteLine("\n");
             Console.WriteLine("-Deposit Money-");
-            Console.WriteLine("Name: " + deposit.Name);
             Console.WriteLine("Currency: " + deposit.Currency);
             Console.WriteLine("IBAN: " + deposit.Iban);
             Console.WriteLine("Value: " + deposit.Value);
 
-            DepositMoney dep = serviceProvider.GetRequiredService<DepositMoney>();
-            dep.PerformOperation(deposit, db);
+            DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
+            dep.PerformOperation(deposit);
 
 
 
@@ -134,8 +133,8 @@ namespace PaymentGateway
             Console.WriteLine("IBAN: " + withdraw.Iban);
             Console.WriteLine("Value: " + withdraw.Value);
 
-            WithdrawMoney wit = serviceProvider.GetRequiredService<WithdrawMoney>();
-            wit.PerformOperation(withdraw, db);
+            WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
+            wit.PerformOperation(withdraw);
 
 
 
@@ -150,12 +149,9 @@ namespace PaymentGateway
                 Limit = 50
             };
 
-            CreateProduct p1 = serviceProvider.GetRequiredService<CreateProduct>();
-            p1.PerformOperation(prod1cmd, db);
 
-
-
-
+            CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
+            p1.PerformOperation(prod1cmd);
 
             CreateProductCommand prod2cmd = new CreateProductCommand
             {
@@ -166,26 +162,73 @@ namespace PaymentGateway
                 Limit = 70
             };
 
-            CreateProduct p2 = serviceProvider.GetRequiredService<CreateProduct>();
-            p2.PerformOperation(prod2cmd, db);
+
+            //db.Products.Add(prod1cmd);
+            //db.Products.Add(prod2cmd);
+
+            CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
+            p2.PerformOperation(prod2cmd);
 
 
 
+
+
+            //Product product1 = new Product
+            //{
+            //    Id = 1,
+            //    Name = "carte",
+            //    Value = 10,
+            //    Currency = "RON",
+            //    Limit = 1000
+            //};
+
+            //Product product2 = new Product
+            //{
+            //    Id = 2,
+            //    Name = "caiet",
+            //    Value = 5,
+            //    Currency = "RON",
+            //    Limit = 1000
+            //};
+
+            //database.Products.Add(product1);
+            //database.Products.Add(product2);
+
+
+
+
+
+
+
+            var listProducts = new List<PurchaseProductDetail>();
+            var prodCmd1 = new PurchaseProductDetail
+            {
+                ProductId = 1,
+                Quantity = 3
+        };
+
+            listProducts.Add(prodCmd1);
+
+            var prodCmd2 = new PurchaseProductDetail
+            {
+                ProductId = 2,
+                Quantity = 3
+            };
+
+            listProducts.Add(prodCmd2);
 
 
             PurchaseProductCommand purchase = new PurchaseProductCommand();
             purchase.Iban = "RO12INGB1234567890";
-            purchase.Name = "Ilie Andrei";
-            purchase.Data = DateTime.UtcNow;
             purchase.ProductDetails = new List<PurchaseProductDetail>
             {
-                new PurchaseProductDetail { ProductId = prod1cmd.ProductId, Quantity = 3 },
-                new PurchaseProductDetail { ProductId = prod2cmd.ProductId, Quantity = 4 }
+                new PurchaseProductDetail { ProductId = prodCmd1.ProductId, Quantity = 3 },
+                new PurchaseProductDetail { ProductId = prodCmd2.ProductId, Quantity = 4 }
             };
 
 
-            PurchaseProduct purchaseProd = serviceProvider.GetRequiredService<PurchaseProduct>();
-            purchaseProd.PerformOperation(purchase, db);
+            PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
+            purchaseProd.PerformOperation(purchase);
 
         }
     }
