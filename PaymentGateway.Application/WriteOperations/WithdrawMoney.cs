@@ -14,10 +14,10 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class WithdrawMoney : IWriteOperation<WithdrawMoneyCommand>
     {
-        public IEventSender eventSender;
+        private readonly IEventSender _eventSender;
         public WithdrawMoney(IEventSender eventSender)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
         }
         public void PerformOperation(WithdrawMoneyCommand operation, Database database)
         { 
@@ -54,7 +54,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
             WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
-            eventSender.SendEvent(withdrawCreated);
+            _eventSender.SendEvent(withdrawCreated);
         }
 
 

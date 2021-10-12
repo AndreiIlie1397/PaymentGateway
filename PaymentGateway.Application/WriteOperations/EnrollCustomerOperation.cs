@@ -5,25 +5,20 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOperations
 {
     public class EnrollCustomerOperation : IWriteOperation<EnrollCustomerCommand>
     {
-        public IEventSender eventSender;
+        private readonly IEventSender _eventSender;
 
 
         public EnrollCustomerOperation(IEventSender eventSender)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
         }
         public void PerformOperation(EnrollCustomerCommand operation, Database database)
         {
-            var Random = new Random();
            
             Person person = new Person();
             person.Name = operation.Name;
@@ -54,7 +49,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
             CustomerEnrolled eventCustEnroll = new(operation.Name, operation.UniqueIdentifier, operation.ClientType, operation.IbanCode);
-            eventSender.SendEvent(eventCustEnroll);
+            _eventSender.SendEvent(eventCustEnroll);
         }
     }
 }

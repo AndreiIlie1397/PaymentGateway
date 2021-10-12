@@ -1,47 +1,71 @@
-﻿using PaymentGateway.Abstractions;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using PaymentGateway.Abstractions;
+using PaymentGateway.Application;
 using PaymentGateway.Application.WriteOperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
-using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using static PaymentGateway.PublishedLanguage.WriteSide.PurchaseProductCommand;
 
 namespace PaymentGateway
 {
     class Program
     {
+        static IConfiguration Configuration;
         static void Main(string[] args)
         {
             Database db = new Database();
-            Account firstAccount = new Account();
-            firstAccount.Balance = 100;
 
-            EnrollCustomerCommand command = new EnrollCustomerCommand();
-            command.Name = "Ilie Andrei";
-            command.UniqueIdentifier = "1234567890";
-            command.ClientType = "Individual";
-            command.AccountType = "Current";
-            command.Currency = "RON";
+            Configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-            IEventSender eventSender = new EventSender();
-            EnrollCustomerOperation client = new EnrollCustomerOperation(eventSender);
+            // setup
+            var services = new ServiceCollection();
+            services.RegisterBusinessServices(Configuration);
+
+            services.AddSingleton<IEventSender, EventSender>();
+            services.AddSingleton(Configuration);
+
+            // build
+            var serviceProvider = services.BuildServiceProvider();
+
+            // use
+            EnrollCustomerCommand command = new EnrollCustomerCommand
+            {
+                Name = "Ilie Andrei",
+                UniqueIdentifier = "1234567890",
+                ClientType = "Individual",
+                AccountType = "Current",
+                Currency = "RON"
+            };
+
+
+            var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             client.PerformOperation(command, db);
 
-            
 
 
 
 
 
-            CreateAccountCommand account = new CreateAccountCommand();
-            //account.IBanCode = "RO12INGB132435678";
-            account.PersonId = 0;
-            account.Currency = "RON";
-            account.Cnp = "197231456445";
-            account.AccountType = "Currency";
-            account.IBanCode = "RO12INGB1234567890";
+
+            CreateAccountCommand account = new CreateAccountCommand
+            {
+                //account.IBanCode = "RO12INGB132435678";
+                PersonId = 0,
+                Currency = "RON",
+                Cnp = "197231456445",
+                AccountType = "Current",
+                IBanCode = "RO12INGB1234567890"
+            };
 
             Console.WriteLine("\n");
             Console.WriteLine("-Create Account-");
@@ -53,7 +77,18 @@ namespace PaymentGateway
             Console.WriteLine("Status account: " + account.Status);
             Console.WriteLine("IBAN: " + account.IBanCode);
 
-            CreateAccount acc = new CreateAccount(eventSender);
+            services.AddSingleton<AccountOptions>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var options = new AccountOptions
+                {
+                    InitialBalance = config.GetValue("AccountOptions:InitialBalance", 0)
+                };
+                return options;
+            });
+
+
+            CreateAccount acc = serviceProvider.GetRequiredService<CreateAccount>();
             acc.PerformOperation(account, db);
 
 
@@ -62,13 +97,15 @@ namespace PaymentGateway
 
 
 
-          
-            DepositMoneyCommand deposit = new DepositMoneyCommand();
-           // deposit.AccountId = 0;
-            deposit.Name = "Ilie Andrei";
-            deposit.Currency = "RON";
-            deposit.Value = 10000;
-            deposit.Iban = "RO12INGB1234567890";
+
+            DepositMoneyCommand deposit = new DepositMoneyCommand
+            {
+                // deposit.AccountId = 0;
+                Name = "Ilie Andrei",
+                Currency = "RON",
+                Value = 10000,
+                Iban = "RO12INGB1234567890"
+            };
 
             Console.WriteLine("\n");
             Console.WriteLine("-Deposit Money-");
@@ -77,16 +114,18 @@ namespace PaymentGateway
             Console.WriteLine("IBAN: " + deposit.Iban);
             Console.WriteLine("Value: " + deposit.Value);
 
-            DepositMoney dep = new DepositMoney(eventSender);
+            DepositMoney dep = serviceProvider.GetRequiredService<DepositMoney>();
             dep.PerformOperation(deposit, db);
 
 
 
-            WithdrawMoneyCommand withdraw = new WithdrawMoneyCommand();
-            withdraw.Name = "Ilie Andrei";
-            withdraw.Currency = "RON";
-            withdraw.Value = 99;
-            withdraw.Iban = "RO12INGB1234567890";
+            WithdrawMoneyCommand withdraw = new WithdrawMoneyCommand
+            {
+                Name = "Ilie Andrei",
+                Currency = "RON",
+                Value = 99,
+                Iban = "RO12INGB1234567890"
+            };
 
             Console.WriteLine("\n");
             Console.WriteLine("-Withdraw Customer-");
@@ -95,45 +134,48 @@ namespace PaymentGateway
             Console.WriteLine("IBAN: " + withdraw.Iban);
             Console.WriteLine("Value: " + withdraw.Value);
 
-            WithdrawMoney wit = new WithdrawMoney(eventSender);
+            WithdrawMoney wit = serviceProvider.GetRequiredService<WithdrawMoney>();
             wit.PerformOperation(withdraw, db);
 
 
-           
 
 
-            CreateProductCommand prod1cmd = new CreateProductCommand();
 
-            prod1cmd.ProductId = 1;
-            prod1cmd.Name = "carte";
-            prod1cmd.Value = 10;
-            prod1cmd.Currency = "RON";
-            prod1cmd.Limit = 50;
+            CreateProductCommand prod1cmd = new CreateProductCommand
+            {
+                ProductId = 1,
+                Name = "carte",
+                Value = 10,
+                Currency = "RON",
+                Limit = 50
+            };
 
-            CreateProduct p1 = new CreateProduct(eventSender);
+            CreateProduct p1 = serviceProvider.GetRequiredService<CreateProduct>();
             p1.PerformOperation(prod1cmd, db);
 
-   
 
 
 
-            CreateProductCommand prod2cmd = new CreateProductCommand();
-            prod2cmd.ProductId = 2;
-            prod2cmd.Name = "caiet";
-            prod2cmd.Value = 5;
-            prod2cmd.Currency = "RON";
-            prod2cmd.Limit = 70;
 
-            CreateProduct p2 = new CreateProduct(eventSender);
+            CreateProductCommand prod2cmd = new CreateProductCommand
+            {
+                ProductId = 2,
+                Name = "caiet",
+                Value = 5,
+                Currency = "RON",
+                Limit = 70
+            };
+
+            CreateProduct p2 = serviceProvider.GetRequiredService<CreateProduct>();
             p2.PerformOperation(prod2cmd, db);
 
 
 
 
-            
+
             PurchaseProductCommand purchase = new PurchaseProductCommand();
             purchase.Iban = "RO12INGB1234567890";
-            purchase.Name= "Ilie Andrei";
+            purchase.Name = "Ilie Andrei";
             purchase.Data = DateTime.UtcNow;
             purchase.ProductDetails = new List<PurchaseProductDetail>
             {
@@ -142,7 +184,7 @@ namespace PaymentGateway
             };
 
 
-            PurchaseProduct purchaseProd = new PurchaseProduct(eventSender);
+            PurchaseProduct purchaseProd = serviceProvider.GetRequiredService<PurchaseProduct>();
             purchaseProd.PerformOperation(purchase, db);
 
         }

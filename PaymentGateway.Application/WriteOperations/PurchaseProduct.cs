@@ -5,20 +5,17 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOperations
 {
     public class PurchaseProduct : IWriteOperation<PurchaseProductCommand>
     {
-        public IEventSender eventSender;
+        private readonly IEventSender _eventSender;
 
         public PurchaseProduct(IEventSender eventSender)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
         }
 
         public void PerformOperation(PurchaseProductCommand operation, Database database)
@@ -67,7 +64,7 @@ namespace PaymentGateway.Application.WriteOperations
             }
 
             ProductPurchased eventProductPurchased = new ProductPurchased { ProductDetails = operation.ProductDetails };
-            eventSender.SendEvent(eventProductPurchased);
+            _eventSender.SendEvent(eventProductPurchased);
             database.SaveChanges();
 
 
@@ -80,7 +77,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
 
-         
+
         }
     }
 }

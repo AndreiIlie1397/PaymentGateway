@@ -5,10 +5,7 @@ using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.WriteSide;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PaymentGateway.Application.WriteOperations
 {
@@ -16,11 +13,12 @@ namespace PaymentGateway.Application.WriteOperations
     {
         // Account account = new Account();
 
-        public IEventSender eventSender;
-
-        public CreateAccount(IEventSender eventSender)
+        private readonly IEventSender _eventSender;
+        private readonly AccountOptions _accountOptions;
+        public CreateAccount(IEventSender eventSender, AccountOptions accountOptions)
         {
-            this.eventSender = eventSender;
+           _eventSender = eventSender;
+            _accountOptions = accountOptions;
         }
 
         public void PerformOperation(CreateAccountCommand operation, Database database)
@@ -45,7 +43,7 @@ namespace PaymentGateway.Application.WriteOperations
             account.PersonId = person.Id;
 
 
-            account.Balance = 0;
+            account.Balance = _accountOptions.InitialBalance;
             account.Currency = operation.Currency;
             account.IbanCode = operation.IBanCode;
             account.Status = AccountStatus.Active;
@@ -71,7 +69,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
             AccountCreated accoutCreated = new(account.IbanCode, account.Currency, account.Balance);
-            eventSender.SendEvent(accoutCreated);
+            _eventSender.SendEvent(accoutCreated);
         }
     }
 }

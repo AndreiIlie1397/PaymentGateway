@@ -15,10 +15,10 @@ namespace PaymentGateway.Application.WriteOperations
     public class DepositMoney : IWriteOperation<DepositMoneyCommand>
     {
        
-        public IEventSender eventSender;
+        public IEventSender _eventSender;
         public DepositMoney(IEventSender eventSender)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
         }
         public void PerformOperation(DepositMoneyCommand operation, Database database)
         {
@@ -64,7 +64,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
             DepositCreated depositCreated = new(account.IbanCode, account.Balance, account.Currency);
-            eventSender.SendEvent(depositCreated);
+            _eventSender.SendEvent(depositCreated);
         }
     }
 }

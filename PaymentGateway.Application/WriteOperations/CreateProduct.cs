@@ -14,10 +14,11 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class CreateProduct : IWriteOperation<CreateProductCommand>
     {
-        public IEventSender eventSender;
+        
+        private readonly IEventSender _eventSender;
         public CreateProduct(IEventSender eventSender)
         {
-            this.eventSender = eventSender;
+            _eventSender = eventSender;
         }
 
         public void PerformOperation(CreateProductCommand operation, Database database)
@@ -34,7 +35,7 @@ namespace PaymentGateway.Application.WriteOperations
             database.SaveChanges();
 
             ProductCreated productCreated = new(product.Name, product.Value, product.Currency, product.Limit);
-            eventSender.SendEvent(productCreated);
+            _eventSender.SendEvent(productCreated);
         }
     }
 }
