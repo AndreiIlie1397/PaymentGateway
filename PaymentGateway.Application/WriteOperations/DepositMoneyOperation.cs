@@ -11,24 +11,25 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class DepositMoneyOperation : IWriteOperation<DepositMoneyCommand>
     {
-
+        private readonly Database _database;
         private readonly IEventSender _eventSender;
-        public DepositMoneyOperation(IEventSender eventSender)
+        public DepositMoneyOperation(IEventSender eventSender, Database database)
         {
             _eventSender = eventSender;
+            _database = database;
         }
         public void PerformOperation(DepositMoneyCommand operation)
         {
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
             Account account;
 
             if (operation.AccountId.HasValue)
             {
-                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
+                account = _database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
             }
             else
             {
-                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
+                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
             }
             if (account == null)
             {
@@ -42,7 +43,7 @@ namespace PaymentGateway.Application.WriteOperations
 
             if(!String.IsNullOrEmpty(operation.Currency))
             {
-                account = database.Accounts.FirstOrDefault(x => x.Currency == operation.Currency);
+                account = _database.Accounts.FirstOrDefault(x => x.Currency == operation.Currency);
             }
             account.Id = operation.AccountId;
             account.Balance = account.Balance + operation.Value;
@@ -54,7 +55,7 @@ namespace PaymentGateway.Application.WriteOperations
             transaction.Type = TransactionType.Deposit;
             transaction.Date = operation.DateOfTransaction;
 
-            database.Transactions.Add(transaction);
+            _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(operation.Value, operation.Currency, operation.DateOfTransaction);
             _eventSender.SendEvent(transactionCreated);
@@ -62,7 +63,7 @@ namespace PaymentGateway.Application.WriteOperations
             DepositCreated depositCreated = new(operation.Iban, account.Balance, account.Currency);
             _eventSender.SendEvent(depositCreated);
 
-            database.SaveChanges();
+            _database.SaveChanges();
         }
     }
 }

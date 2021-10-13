@@ -11,23 +11,25 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class WithdrawMoneyOperation : IWriteOperation<WithdrawMoneyCommand>
     {
+        private readonly Database _database;
         private readonly IEventSender _eventSender;
-        public WithdrawMoneyOperation(IEventSender eventSender)
+        public WithdrawMoneyOperation(IEventSender eventSender, Database database)
         {
             _eventSender = eventSender;
+            _database = database;
         }
         public void PerformOperation(WithdrawMoneyCommand operation)
         {
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
             Account account;
 
             if (operation.AccountId.HasValue)
             {
-                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
+                account = _database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
             }
             else
             {
-                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
+                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
             }
             if (account == null)
             {
@@ -47,7 +49,7 @@ namespace PaymentGateway.Application.WriteOperations
 
             account.Balance = account.Balance - operation.Value;
 
-            database.Transactions.Add(transaction);
+            _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(operation.Value, operation.Currency, operation.DateOfTransaction);
             _eventSender.SendEvent(transactionCreated);
@@ -55,7 +57,7 @@ namespace PaymentGateway.Application.WriteOperations
             WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
             _eventSender.SendEvent(withdrawCreated);
 
-            database.SaveChanges();   
+            _database.SaveChanges();   
         }
     }
 }

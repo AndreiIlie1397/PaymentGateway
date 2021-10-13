@@ -3,8 +3,8 @@ using System;
 
 namespace Abstractions
 {
-    public interface IWriteOperation<T>
+    public interface IWriteOperation<TCommand>
     {
-        public void PerformOperation(T operation);
+        public void PerformOperation(TCommand operation);
     }
 }

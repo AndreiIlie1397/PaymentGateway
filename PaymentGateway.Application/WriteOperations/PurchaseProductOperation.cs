@@ -11,16 +11,18 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class PurchaseProductOperation : IWriteOperation<PurchaseProductCommand>
     {
+        private readonly Database _database;
         private readonly IEventSender _eventSender;
 
-        public PurchaseProductOperation(IEventSender eventSender)
+        public PurchaseProductOperation(IEventSender eventSender, Database database)
         {
             _eventSender = eventSender;
+            _database = database;
         }
 
         public void PerformOperation(PurchaseProductCommand operation)
         {
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
             double totalAmount = 0.0;
 
             Account account;
@@ -28,10 +30,10 @@ namespace PaymentGateway.Application.WriteOperations
 
             if (operation.PersonId.HasValue)
             {
-                account = database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
+                account = _database.Accounts.FirstOrDefault(x => x.Id == operation.AccountId);
             } else
             {
-                account = database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
+                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == operation.Iban);
             }
 
             if(account == null)
@@ -39,17 +41,9 @@ namespace PaymentGateway.Application.WriteOperations
                 throw new Exception("Account not found");
             }
 
-
-
-
-
-
-
-
-
             foreach (var item in operation.ProductDetails)
             {
-                product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
 
                 if (product.Limit < item.Quantity)
                 {
@@ -67,12 +61,12 @@ namespace PaymentGateway.Application.WriteOperations
 
             Transaction transaction = new Transaction();
             transaction.Amount = -totalAmount;
-            database.Transactions.Add(transaction);
+            _database.Transactions.Add(transaction);
             account.Balance = account.Balance - totalAmount;
 
             foreach (var item in operation.ProductDetails)
             {
-                product = database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
                 ProductXTransaction productXTransaction = new ProductXTransaction();
                 productXTransaction.TransactionId = transaction.Id;
                 productXTransaction.ProductId = item.ProductId;
@@ -84,7 +78,7 @@ namespace PaymentGateway.Application.WriteOperations
             ProductPurchased eventProductPurchased = new ProductPurchased { ProductDetails = operation.ProductDetails };
             _eventSender.SendEvent(eventProductPurchased);
 
-            database.SaveChanges();
+            _database.SaveChanges();
         }
     }
 }

@@ -11,29 +11,31 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class CreateAccountOperation : IWriteOperation<CreateAccountCommand>
     {
+        private readonly Database _database;
         private readonly IEventSender _eventSender;
         private readonly AccountOptions _accountOptions;
 
-        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions)
+        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions, Database database)
         {
             _eventSender = eventSender;
             _accountOptions = accountOptions;
+            _database = database;
         }
 
         public void PerformOperation(CreateAccountCommand operation)
         {
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
 
             Account account = new Account();
             Person person;
 
             if (operation.PersonId.HasValue)
             {
-                person = database.Persons.FirstOrDefault(x => x.Id == operation.PersonId);
+                person = _database.Persons.FirstOrDefault(x => x.Id == operation.PersonId);
             }
             else
             {
-                person = database.Persons?.FirstOrDefault(x => x.Cnp == operation.Cnp);
+                person = _database.Persons?.FirstOrDefault(x => x.Cnp == operation.Cnp);
             }
             if (person == null)
             {
@@ -65,13 +67,13 @@ namespace PaymentGateway.Application.WriteOperations
             {
                 throw new Exception("Unsupported account type");
             }
-            database.Accounts.Add(account);
+            _database.Accounts.Add(account);
 
 
             AccountCreated accoutCreated = new(operation.IBanCode, operation.Type, operation.Status.ToString());
             _eventSender.SendEvent(accoutCreated);
 
-            database.SaveChanges();
+            _database.SaveChanges();
         }
     }
 }

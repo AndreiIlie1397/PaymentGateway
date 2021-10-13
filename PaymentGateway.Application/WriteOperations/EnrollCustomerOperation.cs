@@ -10,22 +10,26 @@ namespace PaymentGateway.Application.WriteOperations
 {
     public class EnrollCustomerOperation : IWriteOperation<EnrollCustomerCommand>
     {
+        private readonly Database _database;
         private readonly IEventSender _eventSender;
 
-        public EnrollCustomerOperation(IEventSender eventSender)
+        public EnrollCustomerOperation(IEventSender eventSender, Database database)
         {
             _eventSender = eventSender;
+            _database = database;
         }
         public void PerformOperation(EnrollCustomerCommand operation)
         {
-            Database database = Database.GetInstance();
+            //Database database = Database.GetInstance();
             var random = new Random();
 
-            Person person = new Person();
-            person.Name = operation.Name;
-            person.Cnp = operation.UniqueIdentifier;
+            Person person = new Person
+            {
+                Name = operation.Name,
+                Cnp = operation.UniqueIdentifier
+            };
 
-            if(operation.ClientType == "Company")
+            if (operation.ClientType == "Company")
             {
                 person.Type = PersonType.Company;
             }
@@ -36,8 +40,9 @@ namespace PaymentGateway.Application.WriteOperations
             {
                 throw new Exception("Unsupported person type");
             }
-           
-            database.Persons.Add(person);
+            person.Id = _database.Persons.Count + 1;
+
+            _database.Persons.Add(person);
 
             Account account = new Account();
 
@@ -46,12 +51,12 @@ namespace PaymentGateway.Application.WriteOperations
             account.Balance = 0;
             account.IbanCode = random.Next(100000).ToString();
 
-            database.Accounts.Add(account);
+            _database.Accounts.Add(account);
             
             CustomerEnrolled eventCustomerEnroll = new(operation.Name, operation.UniqueIdentifier, operation.ClientType, operation.IbanCode);
             _eventSender.SendEvent(eventCustomerEnroll);
 
-            database.SaveChanges();
+            _database.SaveChanges();
         }
     }
 }

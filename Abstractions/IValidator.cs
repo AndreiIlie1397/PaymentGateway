@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Abstractions
+namespace PaymentGateway.Abstractions
 {
-    public interface IReadOperation<TInput, TResult>
+    public interface IValidator<TInput>
     {
-        public TResult PerformOperation(TInput query);
+        bool Validate(TInput input);
     }
 }

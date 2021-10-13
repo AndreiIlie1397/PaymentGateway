@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Abstractions;
 using PaymentGateway.Application;
+using PaymentGateway.Application.ReadOperations;
 using PaymentGateway.Application.WriteOperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
@@ -162,50 +163,15 @@ namespace PaymentGateway
                 Limit = 70
             };
 
-
-            //db.Products.Add(prod1cmd);
-            //db.Products.Add(prod2cmd);
-
             CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
             p2.PerformOperation(prod2cmd);
-
-
-
-
-
-            //Product product1 = new Product
-            //{
-            //    Id = 1,
-            //    Name = "carte",
-            //    Value = 10,
-            //    Currency = "RON",
-            //    Limit = 1000
-            //};
-
-            //Product product2 = new Product
-            //{
-            //    Id = 2,
-            //    Name = "caiet",
-            //    Value = 5,
-            //    Currency = "RON",
-            //    Limit = 1000
-            //};
-
-            //database.Products.Add(product1);
-            //database.Products.Add(product2);
-
-
-
-
-
-
 
             var listProducts = new List<PurchaseProductDetail>();
             var prodCmd1 = new PurchaseProductDetail
             {
                 ProductId = 1,
                 Quantity = 3
-        };
+            };
 
             listProducts.Add(prodCmd1);
 
@@ -230,6 +196,15 @@ namespace PaymentGateway
             PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
             purchaseProd.PerformOperation(purchase);
 
+
+
+
+            var query = new Application.ReadOperations.ListOfAccounts.Query
+            {
+                PersonId = 1
+            };
+            var handler = serviceProvider.GetRequiredService<ListOfAccounts.QueryHandler>();
+            var result = handler.PerformOperation(query);
         }
     }
 }
