@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Abstractions;
 using PaymentGateway.Application;
@@ -30,13 +31,18 @@ namespace PaymentGateway
 
             // setup
             var services = new ServiceCollection();
+
+            services.AddMediatR(typeof(ListOfAccounts).Assembly, typeof(AllEventsHandler).Assembly);
+
             services.RegisterBusinessServices(Configuration);
 
-            services.AddSingleton<IEventSender, EventSender>();
+            //services.AddSingleton<IEventSender, EventSender>();
             services.AddSingleton(Configuration);
 
             // build
             var serviceProvider = services.BuildServiceProvider();
+
+            var mediator = serviceProvider.GetRequiredService<MediatR.IMediator>();
 
             // use
             EnrollCustomerCommand command = new EnrollCustomerCommand
@@ -49,8 +55,8 @@ namespace PaymentGateway
             };
 
 
-            var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
-            client.Handle(command, default).GetAwaiter().GetResult();
+            //var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
+            mediator.Send(command, default).GetAwaiter().GetResult();
 
 
 
@@ -68,16 +74,6 @@ namespace PaymentGateway
                 IBanCode = "RO12INGB1234567890"
             };
 
-            Console.WriteLine("\n");
-            Console.WriteLine("-Create Account-");
-            Console.WriteLine("Person Id: " + account.PersonId);
-            Console.WriteLine("CNP: " + account.Cnp);
-            Console.WriteLine("Balance: " + account.Balance);
-            Console.WriteLine("Account Type: " + account.Type);
-            Console.WriteLine("Currency: " + account.Currency);
-            Console.WriteLine("Status account: " + account.Status);
-            Console.WriteLine("IBAN: " + account.IBanCode);
-
             services.AddSingleton<AccountOptions>(sp =>
             {
                 var config = sp.GetRequiredService<IConfiguration>();
@@ -89,8 +85,8 @@ namespace PaymentGateway
             });
 
 
-            CreateAccountOperation acc = serviceProvider.GetRequiredService<CreateAccountOperation>();
-            acc.Handle(account, default).GetAwaiter().GetResult();
+            // CreateAccountOperation acc = serviceProvider.GetRequiredService<CreateAccountOperation>();
+            mediator.Send(account, default).GetAwaiter().GetResult();
 
 
 
@@ -107,14 +103,8 @@ namespace PaymentGateway
                 Iban = "RO12INGB1234567890"
             };
 
-            Console.WriteLine("\n");
-            Console.WriteLine("-Deposit Money-");
-            Console.WriteLine("Currency: " + deposit.Currency);
-            Console.WriteLine("IBAN: " + deposit.Iban);
-            Console.WriteLine("Value: " + deposit.Value);
-
-            DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
-            dep.Handle(deposit, default).GetAwaiter().GetResult();
+            //DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
+            mediator.Send(deposit, default).GetAwaiter().GetResult();
 
 
 
@@ -126,15 +116,8 @@ namespace PaymentGateway
                 Iban = "RO12INGB1234567890"
             };
 
-            Console.WriteLine("\n");
-            Console.WriteLine("-Withdraw Customer-");
-            Console.WriteLine("Name: " + withdraw.Name);
-            Console.WriteLine("Currency: " + withdraw.Currency);
-            Console.WriteLine("IBAN: " + withdraw.Iban);
-            Console.WriteLine("Value: " + withdraw.Value);
-
-            WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
-            wit.Handle(withdraw, default).GetAwaiter().GetResult();
+            //WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
+            mediator.Send(withdraw, default).GetAwaiter().GetResult();
 
 
 
@@ -150,8 +133,8 @@ namespace PaymentGateway
             };
 
 
-            CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
-            p1.Handle(prod1cmd, default).GetAwaiter().GetResult();
+            //CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
+            mediator.Send(prod1cmd, default).GetAwaiter().GetResult();
 
             CreateProductCommand prod2cmd = new CreateProductCommand
             {
@@ -162,8 +145,8 @@ namespace PaymentGateway
                 Limit = 70
             };
 
-            CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
-            p2.Handle(prod2cmd, default).GetAwaiter().GetResult();
+            //CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
+            mediator.Send(prod2cmd, default).GetAwaiter().GetResult();
 
             var listProducts = new List<PurchaseProductDetail>();
             var prodCmd1 = new PurchaseProductDetail
@@ -192,8 +175,8 @@ namespace PaymentGateway
             };
 
 
-            PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
-            purchaseProd.Handle(purchase, default).GetAwaiter().GetResult();
+            //PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
+            mediator.Send(purchase, default).GetAwaiter().GetResult();
 
 
 

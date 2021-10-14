@@ -12,34 +12,35 @@ namespace PaymentGateway.Application.WriteOperations
     public class CreateProductOperation : IRequestHandler<CreateProductCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
-        public CreateProductOperation(IEventSender eventSender, Database database)
+        private readonly IMediator _mediator;
+        public CreateProductOperation(IMediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
-            Product product = new Product();
-
-            product.Id = request.ProductId;
-            product.Name = request.Name;
-            product.Value = request.Value;
-            product.Currency = request.Currency;
-            product.Limit = request.Limit;
+            Product product = new Product
+            {
+                Id = request.ProductId,
+                Name = request.Name,
+                Value = request.Value,
+                Currency = request.Currency,
+                Limit = request.Limit
+            };
 
             _database.Products.Add(product);
             _database.SaveChanges();
 
             ProductCreated productCreated = new(request.ProductId, request.Name, request.Value, request.Currency, request.Limit);
-            _eventSender.SendEvent(productCreated);
+            await _mediator.Publish(productCreated, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
 
-      
+
     }
 }

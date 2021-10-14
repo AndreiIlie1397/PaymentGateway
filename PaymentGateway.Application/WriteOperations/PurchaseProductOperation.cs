@@ -14,15 +14,15 @@ namespace PaymentGateway.Application.WriteOperations
     public class PurchaseProductOperation : IRequestHandler<PurchaseProductCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
+        private readonly IMediator _mediator;
 
-        public PurchaseProductOperation(IEventSender eventSender, Database database)
+        public PurchaseProductOperation(IMediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(PurchaseProductCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(PurchaseProductCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
             double totalAmount = 0.0;
@@ -70,19 +70,21 @@ namespace PaymentGateway.Application.WriteOperations
             foreach (var item in request.ProductDetails)
             {
                 product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
-                ProductXTransaction productXTransaction = new ProductXTransaction();
-                productXTransaction.TransactionId = transaction.Id;
-                productXTransaction.ProductId = item.ProductId;
-                productXTransaction.Quantity = item.Quantity;
-                productXTransaction.Value = product.Value;
-                productXTransaction.Name = product.Name;
+                ProductXTransaction productXTransaction = new ProductXTransaction
+                {
+                    TransactionId = transaction.Id,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    Value = product.Value,
+                    Name = product.Name
+                };
             }
 
             ProductPurchased eventProductPurchased = new ProductPurchased { ProductDetails = request.ProductDetails };
-            _eventSender.SendEvent(eventProductPurchased);
+            await _mediator.Publish(eventProductPurchased, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
     }
 }

@@ -1,13 +1,31 @@
-﻿using PaymentGateway.Abstractions;
+﻿using MediatR;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PaymentGateway.ExternalService
 {
-    public class EventSender: IEventSender
+    public class AllEventsHandler : INotificationHandler<INotification>
     {
-        public void SendEvent(object e)
+        public Task Handle(INotification notification, CancellationToken cancellationToken)
         {
-            Console.WriteLine(e);
+            Console.WriteLine(notification);
+            return Task.CompletedTask;
         }
     }
+    //public class AccountMadeEventHandler : INotificationHandler<AccountMade>
+    //{
+    //    public Task Handle(AccountMade notification, CancellationToken cancellationToken)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
+
+    //public class EnrollCustomerCommandHandler : IRequestHandler<EnrollCustomer>
+    //{
+    //    public Task<Unit> Handle(EnrollCustomer request, CancellationToken cancellationToken)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
 }

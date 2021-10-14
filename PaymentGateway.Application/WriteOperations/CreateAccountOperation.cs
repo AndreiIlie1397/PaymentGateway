@@ -14,17 +14,17 @@ namespace PaymentGateway.Application.WriteOperations
     public class CreateAccountOperation : IRequestHandler<CreateAccountCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
+        private readonly IMediator _mediator;
         private readonly AccountOptions _accountOptions;
 
-        public CreateAccountOperation(IEventSender eventSender, AccountOptions accountOptions, Database database)
+        public CreateAccountOperation(IMediator mediator, AccountOptions accountOptions, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _accountOptions = accountOptions;
             _database = database;
         }
 
-        public Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
 
@@ -73,10 +73,10 @@ namespace PaymentGateway.Application.WriteOperations
 
 
             AccountCreated accoutCreated = new(request.IBanCode, request.Type, request.Status.ToString());
-            _eventSender.SendEvent(accoutCreated);
+            await _mediator.Publish(accoutCreated, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
     }
 

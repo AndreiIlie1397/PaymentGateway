@@ -14,14 +14,14 @@ namespace PaymentGateway.Application.WriteOperations
     public class WithdrawMoneyOperation : IRequestHandler<WithdrawMoneyCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
-        public WithdrawMoneyOperation(IEventSender eventSender, Database database)
+        private readonly IMediator _mediator;
+        public WithdrawMoneyOperation(IMediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(WithdrawMoneyCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(WithdrawMoneyCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
             Account account;
@@ -44,24 +44,26 @@ namespace PaymentGateway.Application.WriteOperations
                 throw new Exception("Cannot withdraw money");
             }
 
-            Transaction transaction = new Transaction();
-            transaction.Currency = request.Currency;
-            transaction.Amount = -request.Value;
-            transaction.Type = TransactionType.Withdraw;
-            transaction.Date = request.DateOfTransaction;
+            Transaction transaction = new Transaction
+            {
+                Currency = request.Currency,
+                Amount = -request.Value,
+                Type = TransactionType.Withdraw,
+                Date = request.DateOfTransaction
+            };
 
             account.Balance = account.Balance - request.Value;
 
             _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
-            _eventSender.SendEvent(transactionCreated);
+            await _mediator.Publish(transactionCreated);
 
             WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
-            _eventSender.SendEvent(withdrawCreated);
+            await _mediator.Publish(withdrawCreated, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
 
         

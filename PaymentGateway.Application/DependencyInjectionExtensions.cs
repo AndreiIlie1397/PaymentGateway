@@ -10,12 +10,12 @@ namespace PaymentGateway.Application
     {
         public static IServiceCollection RegisterBusinessServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddTransient<EnrollCustomerOperation>();
-            services.AddTransient<CreateAccountOperation>();
-            services.AddTransient<DepositMoneyOperation>();
-            services.AddTransient<WithdrawMoneyOperation>();
-            services.AddTransient<CreateProductOperation>();
-            services.AddTransient<PurchaseProductOperation>();
+            //services.AddTransient<EnrollCustomerOperation>();
+            //services.AddTransient<CreateAccountOperation>();
+            //services.AddTransient<DepositMoneyOperation>();
+            //services.AddTransient<WithdrawMoneyOperation>();
+            //services.AddTransient<CreateProductOperation>();
+            //services.AddTransient<PurchaseProductOperation>();
 
             services.AddSingleton<Data.Database>();
 

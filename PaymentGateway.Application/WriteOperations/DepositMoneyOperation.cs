@@ -14,14 +14,14 @@ namespace PaymentGateway.Application.WriteOperations
     public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
-        public DepositMoneyOperation(IEventSender eventSender, Database database)
+        private readonly IMediator _mediator;
+        public DepositMoneyOperation(IMediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
             Account account;
@@ -52,22 +52,24 @@ namespace PaymentGateway.Application.WriteOperations
             account.Balance = account.Balance + request.Value;
             account.IbanCode = request.Iban;
 
-            Transaction transaction = new Transaction();
-            transaction.Currency = request.Currency;
-            transaction.Amount = request.Value;
-            transaction.Type = TransactionType.Deposit;
-            transaction.Date = request.DateOfTransaction;
+            Transaction transaction = new Transaction
+            {
+                Currency = request.Currency,
+                Amount = request.Value,
+                Type = TransactionType.Deposit,
+                Date = request.DateOfTransaction
+            };
 
             _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
-            _eventSender.SendEvent(transactionCreated);
+            await _mediator.Publish(transactionCreated);
 
             DepositCreated depositCreated = new(request.Iban, account.Balance, account.Currency);
-            _eventSender.SendEvent(depositCreated);
+            await _mediator.Publish(depositCreated, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
     }
 }

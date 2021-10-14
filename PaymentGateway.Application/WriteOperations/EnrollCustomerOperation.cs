@@ -13,15 +13,15 @@ namespace PaymentGateway.Application.WriteOperations
     public class EnrollCustomerOperation : IRequestHandler<EnrollCustomerCommand>
     {
         private readonly Database _database;
-        private readonly IEventSender _eventSender;
+        private readonly IMediator _mediator;
 
-        public EnrollCustomerOperation(IEventSender eventSender, Database database)
+        public EnrollCustomerOperation(IMediator mediator, Database database)
         {
-            _eventSender = eventSender;
+            _mediator = mediator;
             _database = database;
         }
 
-        public Task<Unit> Handle(EnrollCustomerCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(EnrollCustomerCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
             var random = new Random();
@@ -59,10 +59,10 @@ namespace PaymentGateway.Application.WriteOperations
             _database.Accounts.Add(account);
 
             CustomerEnrolled eventCustomerEnroll = new(request.Name, request.UniqueIdentifier, request.ClientType, request.IbanCode);
-            _eventSender.SendEvent(eventCustomerEnroll);
+            await _mediator.Publish(eventCustomerEnroll, cancellationToken);
 
             //_database.SaveChanges();
-            return Unit.Task;
+            return Unit.Value;
         }
     }
 }
