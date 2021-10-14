@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using MediatR;
 
-namespace PaymentGateway.PublishedLanguage.WriteSide
+namespace PaymentGateway.PublishedLanguage.Commands
 {
-    public class EnrollCustomerCommand
+    public class EnrollCustomerCommand : IRequest
     {
         public string Name { get; set; }
         public string UniqueIdentifier { get; set; }

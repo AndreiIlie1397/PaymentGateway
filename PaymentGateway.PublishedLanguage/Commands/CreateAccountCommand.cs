@@ -1,13 +1,9 @@
-﻿using PaymentGateway.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MediatR;
+using PaymentGateway.Models;
 
-namespace PaymentGateway.PublishedLanguage.WriteSide
+namespace PaymentGateway.PublishedLanguage.Commands
 {
-    public class CreateAccountCommand
+    public class CreateAccountCommand: IRequest
     {
         public int? PersonId { get; set; }
         public string IBanCode {get; set;}

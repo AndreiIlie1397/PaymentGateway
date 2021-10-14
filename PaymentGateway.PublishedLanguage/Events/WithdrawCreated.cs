@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MediatR;
 
 namespace PaymentGateway.PublishedLanguage.Events
 {
-    public class WithdrawCreated
+    public class WithdrawCreated : INotification
     {
         public string Iban { get; set; }
         public double Amount { get; set; }

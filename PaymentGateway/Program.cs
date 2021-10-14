@@ -6,12 +6,11 @@ using PaymentGateway.Application.ReadOperations;
 using PaymentGateway.Application.WriteOperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
-using PaymentGateway.Models;
-using PaymentGateway.PublishedLanguage.WriteSide;
+using PaymentGateway.PublishedLanguage.Commands;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using static PaymentGateway.PublishedLanguage.WriteSide.PurchaseProductCommand;
+using static PaymentGateway.PublishedLanguage.Commands.PurchaseProductCommand;
 
 namespace PaymentGateway
 {
@@ -51,7 +50,7 @@ namespace PaymentGateway
 
 
             var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
-            client.PerformOperation(command);
+            client.Handle(command, default).GetAwaiter().GetResult();
 
 
 
@@ -91,7 +90,7 @@ namespace PaymentGateway
 
 
             CreateAccountOperation acc = serviceProvider.GetRequiredService<CreateAccountOperation>();
-            acc.PerformOperation(account);
+            acc.Handle(account, default).GetAwaiter().GetResult();
 
 
 
@@ -115,7 +114,7 @@ namespace PaymentGateway
             Console.WriteLine("Value: " + deposit.Value);
 
             DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
-            dep.PerformOperation(deposit);
+            dep.Handle(deposit, default).GetAwaiter().GetResult();
 
 
 
@@ -135,7 +134,7 @@ namespace PaymentGateway
             Console.WriteLine("Value: " + withdraw.Value);
 
             WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
-            wit.PerformOperation(withdraw);
+            wit.Handle(withdraw, default).GetAwaiter().GetResult();
 
 
 
@@ -152,7 +151,7 @@ namespace PaymentGateway
 
 
             CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
-            p1.PerformOperation(prod1cmd);
+            p1.Handle(prod1cmd, default).GetAwaiter().GetResult();
 
             CreateProductCommand prod2cmd = new CreateProductCommand
             {
@@ -164,7 +163,7 @@ namespace PaymentGateway
             };
 
             CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
-            p2.PerformOperation(prod2cmd);
+            p2.Handle(prod2cmd, default).GetAwaiter().GetResult();
 
             var listProducts = new List<PurchaseProductDetail>();
             var prodCmd1 = new PurchaseProductDetail
@@ -194,7 +193,7 @@ namespace PaymentGateway
 
 
             PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
-            purchaseProd.PerformOperation(purchase);
+            purchaseProd.Handle(purchase, default).GetAwaiter().GetResult();
 
 
 
@@ -204,7 +203,7 @@ namespace PaymentGateway
                 PersonId = 1
             };
             var handler = serviceProvider.GetRequiredService<ListOfAccounts.QueryHandler>();
-            var result = handler.PerformOperation(query);
+            var result = handler.Handle(query, default).GetAwaiter().GetResult();
         }
     }
 }
