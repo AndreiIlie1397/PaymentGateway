@@ -1,7 +1,6 @@
 ﻿using System;
 using PaymentGateway.PublishedLanguage.Commands;
 using System.Linq;
-using PaymentGateway.Abstractions;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
@@ -49,10 +48,10 @@ namespace PaymentGateway.Application.WriteOperations
                 account = _database.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
             }
             account.Id = request.AccountId;
-            account.Balance = account.Balance + request.Value;
+            account.Balance += request.Value;
             account.IbanCode = request.Iban;
 
-            Transaction transaction = new Transaction
+            Transaction transaction = new()
             {
                 Currency = request.Currency,
                 Amount = request.Value,
@@ -63,12 +62,12 @@ namespace PaymentGateway.Application.WriteOperations
             _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
-            await _mediator.Publish(transactionCreated);
+            await _mediator.Publish(transactionCreated, cancellationToken);
 
             DepositCreated depositCreated = new(request.Iban, account.Balance, account.Currency);
             await _mediator.Publish(depositCreated, cancellationToken);
 
-            //_database.SaveChanges();
+            Database.SaveChanges();
             return Unit.Value;
         }
     }

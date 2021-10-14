@@ -1,5 +1,4 @@
-﻿using PaymentGateway.Abstractions;
-using PaymentGateway.Data;
+﻿using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.Commands;
@@ -26,7 +25,7 @@ namespace PaymentGateway.Application.WriteOperations
             //Database database = Database.GetInstance();
             var random = new Random();
 
-            Person person = new Person
+            Person person = new()
             {
                 Name = request.Name,
                 Cnp = request.UniqueIdentifier
@@ -48,7 +47,7 @@ namespace PaymentGateway.Application.WriteOperations
 
             _database.Persons.Add(person);
 
-            Account account = new Account
+            Account account = new()
             {
                 Type = AccountType.Current,
                 Currency = request.Currency,
@@ -61,7 +60,7 @@ namespace PaymentGateway.Application.WriteOperations
             CustomerEnrolled eventCustomerEnroll = new(request.Name, request.UniqueIdentifier, request.ClientType, request.IbanCode);
             await _mediator.Publish(eventCustomerEnroll, cancellationToken);
 
-            //_database.SaveChanges();
+            Database.SaveChanges();
             return Unit.Value;
         }
     }

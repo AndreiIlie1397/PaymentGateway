@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using PaymentGateway.Abstractions;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
@@ -28,7 +27,7 @@ namespace PaymentGateway.Application.WriteOperations
         {
             //Database database = Database.GetInstance();
 
-            Account account = new Account();
+            Account account = new();
             Person person;
 
             if (request.PersonId.HasValue)
@@ -75,7 +74,7 @@ namespace PaymentGateway.Application.WriteOperations
             AccountCreated accoutCreated = new(request.IBanCode, request.Type, request.Status.ToString());
             await _mediator.Publish(accoutCreated, cancellationToken);
 
-            //_database.SaveChanges();
+            Database.SaveChanges();
             return Unit.Value;
         }
     }

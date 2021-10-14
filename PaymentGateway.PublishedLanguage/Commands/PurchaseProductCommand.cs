@@ -9,7 +9,7 @@ namespace PaymentGateway.PublishedLanguage.Commands
         public int? AccountId { get; set; }
         public string Iban { get; set; }
 
-        public List<PurchaseProductDetail> ProductDetails = new List<PurchaseProductDetail>();
+        public List<PurchaseProductDetail> ProductDetails = new();
 
         public class PurchaseProductDetail
         {

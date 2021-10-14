@@ -1,5 +1,4 @@
-﻿using PaymentGateway.Abstractions;
-using PaymentGateway.Data;
+﻿using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.Commands;
@@ -22,7 +21,7 @@ namespace PaymentGateway.Application.WriteOperations
         public async Task<Unit> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
-            Product product = new Product
+            Product product = new()
             {
                 Id = request.ProductId,
                 Name = request.Name,
@@ -32,12 +31,12 @@ namespace PaymentGateway.Application.WriteOperations
             };
 
             _database.Products.Add(product);
-            _database.SaveChanges();
+            Database.SaveChanges();
 
             ProductCreated productCreated = new(request.ProductId, request.Name, request.Value, request.Currency, request.Limit);
             await _mediator.Publish(productCreated, cancellationToken);
 
-            //_database.SaveChanges();
+            Database.SaveChanges();
             return Unit.Value;
         }
 

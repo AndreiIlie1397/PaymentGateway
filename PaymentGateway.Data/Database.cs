@@ -6,13 +6,13 @@ namespace PaymentGateway.Data
 {
     public class Database
     {
-        public List<Person> Persons = new List<Person>();
-        public List<Account> Accounts = new List<Account>();
-        public List<Product> Products = new List<Product>();
-        public List<Transaction> Transactions = new List<Transaction>();
-        public List<ProductXTransaction> ProductXTransactions = new List<ProductXTransaction>();
+        public List<Person> Persons = new();
+        public List<Account> Accounts = new();
+        public List<Product> Products = new();
+        public List<Transaction> Transactions = new();
+        public List<ProductXTransaction> ProductXTransactions = new();
 
-        private static Database _instance;
+        //private static Database _instance;
 
         //public static Database GetInstance()
         //{
@@ -23,7 +23,7 @@ namespace PaymentGateway.Data
         //    return _instance;
         //}
 
-        public void SaveChanges()
+        public static void SaveChanges()
         {
             Console.WriteLine("Save changes to database");
         }

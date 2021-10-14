@@ -1,5 +1,4 @@
-﻿using PaymentGateway.Abstractions;
-using PaymentGateway.Data;
+﻿using PaymentGateway.Data;
 using PaymentGateway.Models;
 using PaymentGateway.PublishedLanguage.Events;
 using PaymentGateway.PublishedLanguage.Commands;
@@ -52,7 +51,7 @@ namespace PaymentGateway.Application.WriteOperations
                 {
                     throw new Exception("Insufficient stocks!");
                 }
-                product.Limit = product.Limit - item.Quantity;
+                product.Limit -= item.Quantity;
 
                 totalAmount += item.Quantity * product.Value;
             }
@@ -62,15 +61,15 @@ namespace PaymentGateway.Application.WriteOperations
                 throw new Exception("You have insufficient funds!");
             }
 
-            Transaction transaction = new Transaction();
+            Transaction transaction = new();
             transaction.Amount = -totalAmount;
             _database.Transactions.Add(transaction);
-            account.Balance = account.Balance - totalAmount;
+            account.Balance -= totalAmount;
 
             foreach (var item in request.ProductDetails)
             {
                 product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
-                ProductXTransaction productXTransaction = new ProductXTransaction
+                ProductXTransaction productXTransaction = new()
                 {
                     TransactionId = transaction.Id,
                     ProductId = item.ProductId,
@@ -80,10 +79,10 @@ namespace PaymentGateway.Application.WriteOperations
                 };
             }
 
-            ProductPurchased eventProductPurchased = new ProductPurchased { ProductDetails = request.ProductDetails };
+            ProductPurchased eventProductPurchased = new() { ProductDetails = request.ProductDetails };
             await _mediator.Publish(eventProductPurchased, cancellationToken);
 
-            //_database.SaveChanges();
+            Database.SaveChanges();
             return Unit.Value;
         }
     }
