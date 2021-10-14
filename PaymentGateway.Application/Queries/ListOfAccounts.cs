@@ -8,13 +8,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PaymentGateway.Application.ReadOperations
+namespace PaymentGateway.Application.Queries
 {
     public class ListOfAccounts
     {
         public class Validator : IValidator<Query>
         {
-            private readonly Data.Database _database;
+            private readonly Database _database;
             public Validator(Database database)
             {
                 _database = database;

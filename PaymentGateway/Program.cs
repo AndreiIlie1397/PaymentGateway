@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Abstractions;
 using PaymentGateway.Application;
-using PaymentGateway.Application.ReadOperations;
+using PaymentGateway.Application.Queries;
 using PaymentGateway.Application.WriteOperations;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
@@ -198,7 +198,7 @@ namespace PaymentGateway
 
 
 
-            var query = new Application.ReadOperations.ListOfAccounts.Query
+            var query = new ListOfAccounts.Query
             {
                 PersonId = 1
             };
