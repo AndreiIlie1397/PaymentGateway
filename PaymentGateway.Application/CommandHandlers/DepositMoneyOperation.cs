@@ -1,26 +1,26 @@
-﻿using MediatR;
+﻿using System;
+using PaymentGateway.PublishedLanguage.Commands;
+using System.Linq;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
-using PaymentGateway.PublishedLanguage.Commands;
 using PaymentGateway.PublishedLanguage.Events;
-using System;
-using System.Linq;
-using System.Threading;
+using MediatR;
 using System.Threading.Tasks;
+using System.Threading;
 
-namespace PaymentGateway.Application.WriteOperations
+namespace PaymentGateway.Application.CommandHandlers
 {
-    public class WithdrawMoneyOperation : IRequestHandler<WithdrawMoneyCommand>
+    public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
         private readonly Database _database;
         private readonly IMediator _mediator;
-        public WithdrawMoneyOperation(IMediator mediator, Database database)
+        public DepositMoneyOperation(IMediator mediator, Database database)
         {
             _mediator = mediator;
             _database = database;
         }
 
-        public async Task<Unit> Handle(WithdrawMoneyCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
             Account account;
@@ -38,33 +38,37 @@ namespace PaymentGateway.Application.WriteOperations
                 throw new Exception("Account not found");
             }
 
-            if (account.Balance < request.Value)
+            if (request.Value <= 0)
             {
-                throw new Exception("Cannot withdraw money");
+                throw new Exception("Cannot deposit negative amount");
             }
+
+            if (!String.IsNullOrEmpty(request.Currency))
+            {
+                account = _database.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
+            }
+            account.Id = request.AccountId;
+            account.Balance += request.Value;
+            account.IbanCode = request.Iban;
 
             Transaction transaction = new()
             {
                 Currency = request.Currency,
-                Amount = -request.Value,
-                Type = TransactionType.Withdraw,
+                Amount = request.Value,
+                Type = TransactionType.Deposit,
                 Date = request.DateOfTransaction
             };
-
-            account.Balance -= request.Value;
 
             _database.Transactions.Add(transaction);
 
             TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
             await _mediator.Publish(transactionCreated, cancellationToken);
 
-            WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
-            await _mediator.Publish(withdrawCreated, cancellationToken);
+            DepositCreated depositCreated = new(request.Iban, account.Balance, account.Currency);
+            await _mediator.Publish(depositCreated, cancellationToken);
 
             Database.SaveChanges();
             return Unit.Value;
         }
-
-        
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PaymentGateway.Abstractions;
 using static PaymentGateway.Application.Queries.ListOfAccounts;
+
 
 namespace PaymentGateway.Application
 {
@@ -18,7 +18,6 @@ namespace PaymentGateway.Application
 
             services.AddSingleton<Data.Database>();
 
-            services.AddTransient<IValidator<Query>, Validator>();
             services.AddTransient<QueryHandler>();
 
             services.AddSingleton(sp =>

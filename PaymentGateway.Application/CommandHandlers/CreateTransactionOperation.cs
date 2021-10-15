@@ -1,5 +1,5 @@
 ﻿
-namespace PaymentGateway.Application.WriteOperations
+namespace PaymentGateway.Application.CommandHandlers
 {
     public class CreateTransactionOperation
     {

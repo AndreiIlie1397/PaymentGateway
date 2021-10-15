@@ -1,5 +1,5 @@
-﻿using MediatR;
-using PaymentGateway.Abstractions;
+﻿using FluentValidation;
+using MediatR;
 using PaymentGateway.Data;
 using PaymentGateway.Models;
 using System;
@@ -12,39 +12,50 @@ namespace PaymentGateway.Application.Queries
 {
     public class ListOfAccounts
     {
-        public class Validator : IValidator<Query>
+        public class Validator : AbstractValidator<Query>
         {
-            private readonly Database _database;
-            public Validator(Database database)
+            public Validator(Database _database)
             {
-                _database = database;
+                RuleFor(q => q).Must(query =>
+                {
+                    var person = query.PersonId.HasValue ?
+                    _database.Persons.FirstOrDefault(x => x.Id == query.PersonId) :
+                    _database.Persons.FirstOrDefault(x => x.Cnp == query.Cnp);
+
+                    return person != null;
+                }).WithMessage("Customer not found");
             }
-
-            public bool Validate(Query input)
+        }
+        public class Validator2 : AbstractValidator<Query>
+        {
+            public Validator2(Database database)
             {
-                var person = input.PersonId.HasValue ?
-                     _database.Persons.FirstOrDefault(x => x.Id == input.PersonId) :
-                     _database.Persons.FirstOrDefault(x => x.Cnp == input.cnp);
+                RuleFor(q => q).Must(person =>
+                {
+                    return person.PersonId.HasValue || !string.IsNullOrEmpty(person.Cnp);
+                }).WithMessage("Customer data is invalid - personid");
 
-                return person != null;
+                RuleFor(q => q.PersonId).Must(personId =>
+                {
+                    var exists = database.Persons.Any(x => x.Id == personId);
+                    return exists;
+                }).WithMessage("Customer does not exist");
             }
         }
 
         public class Query : IRequest<List<Model>>
         {
             public int? PersonId { get; set; }
-            public string cnp { get; set; }
+            public string? Cnp { get; set; }
         }
 
         public class QueryHandler : IRequestHandler<Query, List<Model>>
         {
             private readonly Database _database;
-            private readonly IValidator<Query> _validator;
 
-            public QueryHandler(Database database, IValidator<Query> validator)
+            public QueryHandler(Database database)
             {
                 _database = database;
-                _validator = validator;
             }
 
             public object Handle(Query query, object cancellationToken)
@@ -54,15 +65,11 @@ namespace PaymentGateway.Application.Queries
 
             public Task<List<Model>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var isValid = _validator.Validate(request);
-                if (!isValid)
-                {
-                    throw new Exception("Person not found");
-                }
+
 
                 var person = request.PersonId.HasValue ?
                     _database.Persons.FirstOrDefault(x => x.Id == request.PersonId) :
-                    _database.Persons.FirstOrDefault(x => x.Cnp == request.cnp);
+                    _database.Persons.FirstOrDefault(x => x.Cnp == request.Cnp);
 
                 var db = _database.Accounts.Where(x => x.PersonId == request.PersonId);
 
