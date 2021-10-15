@@ -34,10 +34,11 @@ namespace PaymentGateway
 
             var source = new CancellationTokenSource();
             var cancellationToken = source.Token;
+            services.RegisterBusinessServices(Configuration);
 
             services.AddMediatR(typeof(ListOfAccounts).Assembly, typeof(AllEventsHandler).Assembly);
 
-            services.RegisterBusinessServices(Configuration);
+            services.AddScopedContravariant<INotificationHandler<INotification>, AllEventsHandler>(typeof(EnrollCustomerCommand).Assembly);
 
             //services.AddSingleton<IEventSender, EventSender>();
             services.AddSingleton(Configuration);
