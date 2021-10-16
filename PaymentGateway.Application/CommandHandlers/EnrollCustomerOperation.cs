@@ -11,15 +11,14 @@ namespace PaymentGateway.Application.CommandHandlers
 {
     public class EnrollCustomerOperation : IRequestHandler<EnrollCustomerCommand>
     {
-        private readonly Database _database;
+        private readonly PaymentDbContext _dbContext;
         private readonly IMediator _mediator;
 
-        public EnrollCustomerOperation(IMediator mediator, Database database)
+        public EnrollCustomerOperation(IMediator mediator, PaymentDbContext dbContext)
         {
             _mediator = mediator;
-            _database = database;
+            _dbContext = dbContext;
         }
-
         public async Task<Unit> Handle(EnrollCustomerCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
@@ -43,24 +42,13 @@ namespace PaymentGateway.Application.CommandHandlers
             {
                 throw new Exception("Unsupported person type");
             }
-            person.Id = _database.Persons.Count + 1;
 
-            _database.Persons.Add(person);
+            _dbContext.Persons.Add(person);
 
-            Account account = new()
-            {
-                Type = AccountType.Current,
-                Currency = request.Currency,
-                Balance = 0,
-                IbanCode = random.Next(100000).ToString()
-            };
-
-            _database.Accounts.Add(account);
-
-            CustomerEnrolled eventCustomerEnroll = new(request.Name, request.UniqueIdentifier, request.ClientType, request.IbanCode);
+            CustomerEnrolled eventCustomerEnroll = new(request.Name, request.UniqueIdentifier, request.ClientType);
             await _mediator.Publish(eventCustomerEnroll, cancellationToken);
 
-            Database.SaveChanges();
+            _dbContext.SaveChanges();
             return Unit.Value;
         }
     }

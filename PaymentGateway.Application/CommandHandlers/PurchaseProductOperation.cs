@@ -12,32 +12,31 @@ namespace PaymentGateway.Application.CommandHandlers
 {
     public class PurchaseProductOperation : IRequestHandler<PurchaseProductCommand>
     {
-        private readonly Database _database;
+        private readonly PaymentDbContext _dbContext;
         private readonly IMediator _mediator;
 
-        public PurchaseProductOperation(IMediator mediator, Database database)
+        public PurchaseProductOperation(IMediator mediator, PaymentDbContext dbContext)
         {
             _mediator = mediator;
-            _database = database;
+            _dbContext = dbContext;
         }
 
         public async Task<Unit> Handle(PurchaseProductCommand request, CancellationToken cancellationToken)
         {
             //Database database = Database.GetInstance();
-            double totalAmount = 0.0;
+            decimal totalAmount = 0;
 
             Account account;
             Product product;
 
             if (request.PersonId.HasValue)
             {
-                account = _database.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
             }
             else
             {
-                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == request.Iban);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Iban == request.Iban);
             }
-
             if (account == null)
             {
                 throw new Exception("Account not found");
@@ -45,44 +44,53 @@ namespace PaymentGateway.Application.CommandHandlers
 
             foreach (var item in request.ProductDetails)
             {
-                product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
+                product = _dbContext.Products.FirstOrDefault(x => x.Id == item.ProductId);
 
+                if (item.Quantity < 1)
+                {
+                    throw new Exception("Quantity is negative");
+                }
                 if (product.Limit < item.Quantity)
                 {
-                    throw new Exception("Insufficient stocks!");
+                    throw new Exception("Product not in stock");
                 }
-                product.Limit -= item.Quantity;
 
                 totalAmount += item.Quantity * product.Value;
-            }
 
-            if (account.Balance < totalAmount)
-            {
-                throw new Exception("You have insufficient funds!");
-            }
-
-            Transaction transaction = new();
-            transaction.Amount = -totalAmount;
-            _database.Transactions.Add(transaction);
-            account.Balance -= totalAmount;
-
-            foreach (var item in request.ProductDetails)
-            {
-                product = _database.Products.FirstOrDefault(x => x.Id == item.ProductId);
-                ProductXTransaction productXTransaction = new()
+                if (account.Balance < totalAmount)
                 {
-                    TransactionId = transaction.Id,
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    Value = product.Value,
-                    Name = product.Name
-                };
+                    throw new Exception("You have insufficient funds!");
+                }
+
+                //ProductXTransaction productXTransaction = new()
+                //{
+                //    TransactionId = item.TransactionId,
+                //    ProductId = item.ProductId,
+                //    Quantity = item.Quantity
+                //};
+
+                //_dbContext.ProductXTransactions.Add(productXTransaction);
+
+                
+                account.Balance -= totalAmount;
+                product.Limit -= item.Quantity;
+  
             }
+            Transaction transaction = new()
+            {
+                Currency = request.Currency,
+                Amount = -totalAmount,
+                Type = TransactionType.PurchaseService,
+                Date = request.DateOfTransaction,
+                AccountId = account.Id
+            };
+
+            _dbContext.Transactions.Add(transaction);
 
             ProductPurchased eventProductPurchased = new() { ProductDetails = request.ProductDetails };
             await _mediator.Publish(eventProductPurchased, cancellationToken);
 
-            Database.SaveChanges();
+            _dbContext.SaveChanges();
             return Unit.Value;
         }
     }

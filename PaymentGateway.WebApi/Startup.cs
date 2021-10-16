@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
 using PaymentGateway.Application.Queries;
-using PaymentGateway.Application.WriteOperations;
+using PaymentGateway.Application.CommandHandlers;
 using PaymentGateway.ExternalService;
 using PaymentGateway.WebApi.MediatorPipeline;
 using PaymentGateway.WebApi.Middleware;
@@ -73,9 +73,6 @@ namespace PaymentGateway.WebApi
                 //c.OAuthScopeSeparator(" ");
                 c.EnableValidator(null);
             });
-
-
-
 
             app.UseRouting();
 

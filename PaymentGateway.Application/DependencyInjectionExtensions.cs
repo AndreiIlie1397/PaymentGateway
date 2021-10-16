@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PaymentGateway.Application.Services;
 using static PaymentGateway.Application.Queries.ListOfAccounts;
 
 
@@ -15,8 +16,10 @@ namespace PaymentGateway.Application
             //services.AddTransient<WithdrawMoneyOperation>();
             //services.AddTransient<CreateProductOperation>();
             //services.AddTransient<PurchaseProductOperation>();
+            
+            services.AddSingleton<NewIban>();
 
-            services.AddSingleton<Data.Database>();
+            services.AddSingleton<Data.PaymentDbContext>();
 
             services.AddTransient<QueryHandler>();
 

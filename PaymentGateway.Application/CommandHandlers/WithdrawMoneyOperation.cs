@@ -12,12 +12,12 @@ namespace PaymentGateway.Application.CommandHandlers
 {
     public class WithdrawMoneyOperation : IRequestHandler<WithdrawMoneyCommand>
     {
-        private readonly Database _database;
+        private readonly PaymentDbContext _dbContext;
         private readonly IMediator _mediator;
-        public WithdrawMoneyOperation(IMediator mediator, Database database)
+        public WithdrawMoneyOperation(IMediator mediator, PaymentDbContext dbContext)
         {
             _mediator = mediator;
-            _database = database;
+            _dbContext = dbContext;
         }
 
         public async Task<Unit> Handle(WithdrawMoneyCommand request, CancellationToken cancellationToken)
@@ -27,18 +27,18 @@ namespace PaymentGateway.Application.CommandHandlers
 
             if (request.AccountId.HasValue)
             {
-                account = _database.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
             }
             else
             {
-                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == request.Iban);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Iban == request.Iban);
             }
             if (account == null)
             {
                 throw new Exception("Account not found");
             }
 
-            if (account.Balance < request.Value)
+            if (account.Balance < request.Amount)
             {
                 throw new Exception("Cannot withdraw money");
             }
@@ -46,25 +46,24 @@ namespace PaymentGateway.Application.CommandHandlers
             Transaction transaction = new()
             {
                 Currency = request.Currency,
-                Amount = -request.Value,
+                Amount = -request.Amount,
                 Type = TransactionType.Withdraw,
-                Date = request.DateOfTransaction
+                Date = request.DateOfTransaction,
+                AccountId = account.Id
             };
 
-            account.Balance -= request.Value;
+            account.Balance -= request.Amount;
 
-            _database.Transactions.Add(transaction);
+            _dbContext.Transactions.Add(transaction);
 
-            TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
+            TransactionCreated transactionCreated = new(request.Amount, request.Currency, request.DateOfTransaction);
             await _mediator.Publish(transactionCreated, cancellationToken);
 
-            WithdrawCreated withdrawCreated = new(account.IbanCode, account.Balance, account.Currency);
+            WithdrawCreated withdrawCreated = new(account.Iban, account.Balance, account.Currency);
             await _mediator.Publish(withdrawCreated, cancellationToken);
 
-            Database.SaveChanges();
+            _dbContext.SaveChanges();
             return Unit.Value;
         }
-
-        
     }
 }

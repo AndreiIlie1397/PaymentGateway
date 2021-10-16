@@ -12,12 +12,12 @@ namespace PaymentGateway.Application.CommandHandlers
 {
     public class DepositMoneyOperation : IRequestHandler<DepositMoneyCommand>
     {
-        private readonly Database _database;
+        private readonly PaymentDbContext _dbContext;
         private readonly IMediator _mediator;
-        public DepositMoneyOperation(IMediator mediator, Database database)
+        public DepositMoneyOperation(IMediator mediator, PaymentDbContext dbContext)
         {
             _mediator = mediator;
-            _database = database;
+            _dbContext = dbContext;
         }
 
         public async Task<Unit> Handle(DepositMoneyCommand request, CancellationToken cancellationToken)
@@ -27,47 +27,47 @@ namespace PaymentGateway.Application.CommandHandlers
 
             if (request.AccountId.HasValue)
             {
-                account = _database.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Id == request.AccountId);
             }
             else
             {
-                account = _database.Accounts.FirstOrDefault(x => x.IbanCode == request.Iban);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Iban == request.Iban);
             }
             if (account == null)
             {
                 throw new Exception("Account not found");
             }
 
-            if (request.Value <= 0)
+            if (request.Amount <= 0)
             {
                 throw new Exception("Cannot deposit negative amount");
             }
 
             if (!String.IsNullOrEmpty(request.Currency))
             {
-                account = _database.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
             }
-            account.Id = request.AccountId;
-            account.Balance += request.Value;
-            account.IbanCode = request.Iban;
+
+            account.Balance += request.Amount;
 
             Transaction transaction = new()
             {
                 Currency = request.Currency,
-                Amount = request.Value,
+                Amount = request.Amount,
                 Type = TransactionType.Deposit,
-                Date = request.DateOfTransaction
+                Date = request.DateOfTransaction,
+                AccountId = account.Id
             };
 
-            _database.Transactions.Add(transaction);
+            _dbContext.Transactions.Add(transaction);
 
-            TransactionCreated transactionCreated = new(request.Value, request.Currency, request.DateOfTransaction);
+            TransactionCreated transactionCreated = new(request.Amount, request.Currency, request.DateOfTransaction);
             await _mediator.Publish(transactionCreated, cancellationToken);
 
             DepositCreated depositCreated = new(request.Iban, account.Balance, account.Currency);
             await _mediator.Publish(depositCreated, cancellationToken);
 
-            Database.SaveChanges();
+            _dbContext.SaveChanges();
             return Unit.Value;
         }
     }

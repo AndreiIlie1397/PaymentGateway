@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application;
 using PaymentGateway.Application.Queries;
+using PaymentGateway.Application.Services;
 using PaymentGateway.Data;
 using PaymentGateway.ExternalService;
 using PaymentGateway.PublishedLanguage.Commands;
@@ -22,7 +23,6 @@ namespace PaymentGateway
         static IConfiguration Configuration;
         static async Task Main(string[] args)
         {
-            Database database = new();
 
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -37,6 +37,7 @@ namespace PaymentGateway
             var source = new CancellationTokenSource();
             var cancellationToken = source.Token;
             services.RegisterBusinessServices(Configuration);
+            services.AddPaymentDataAccess(Configuration);
 
             services.Scan(scan => scan
                    .FromAssemblyOf<ListOfAccounts>()
@@ -57,30 +58,30 @@ namespace PaymentGateway
 
             // build
             var serviceProvider = services.BuildServiceProvider();
-
+            var database = serviceProvider.GetRequiredService<PaymentDbContext>();
+            var ibanService = serviceProvider.GetRequiredService<NewIban>();
             var mediator = serviceProvider.GetRequiredService<IMediator>();
 
-            // use
-            EnrollCustomerCommand command = new()
-            {
-                Name = "Ilie Andrei",
-                UniqueIdentifier = "1234567890",
-                ClientType = "Individual",
-                AccountType = "Current",
-                Currency = "RON"
-            };
+            //use
+           EnrollCustomerCommand command = new()
+           {
+               Name = "Ilie Andrei",
+               UniqueIdentifier = Guid.NewGuid().ToString(),
+               ClientType = "Individual",
+               //AccountType = "Current"
+               Currency = "RON"
+           };
 
             //var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             await mediator.Send(command, cancellationToken);
 
             CreateAccountCommand account = new()
             {
-                //account.IBanCode = "RO12INGB132435678";
                 PersonId = 1,
                 Currency = "RON",
-                Cnp = "197231456445",
+                Cnp = Guid.NewGuid().ToString(),
                 Type = "Current",
-                IBanCode = "RO12INGB1234567890"
+                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString()
             };
 
             services.AddSingleton<AccountOptions>(sp =>
@@ -100,8 +101,10 @@ namespace PaymentGateway
             {
                 // deposit.AccountId = 0;
                 Currency = "RON",
-                Value = 10000,
-                Iban = "RO12INGB1234567890"
+                Amount = 1001,
+                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                DateOfTransaction = DateTime.Now,
+                DateOfOperation = DateTime.Now
             };
 
             //DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
@@ -111,8 +114,10 @@ namespace PaymentGateway
             {
                 Name = "Ilie Andrei",
                 Currency = "RON",
-                Value = 99,
-                Iban = "RO12INGB1234567890"
+                Amount = 99,
+                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                DateOfTransaction = DateTime.Now,
+                DateOfOperation = DateTime.Now
             };
 
             //WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
@@ -120,11 +125,10 @@ namespace PaymentGateway
 
             CreateProductCommand prod1cmd = new()
             {
-                ProductId = 1,
                 Name = "carte",
                 Value = 10,
                 Currency = "RON",
-                Limit = 50
+                Limit = 100
             };
 
             //CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
@@ -132,11 +136,10 @@ namespace PaymentGateway
 
             CreateProductCommand prod2cmd = new()
             {
-                ProductId = 2,
                 Name = "caiet",
                 Value = 5,
                 Currency = "RON",
-                Limit = 70
+                Limit = 100
             };
 
             //CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
@@ -161,10 +164,13 @@ namespace PaymentGateway
 
             PurchaseProductCommand purchase = new()
             {
-                Iban = "RO12INGB1234567890",
+                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                Currency = "RON",
+                DateOfTransaction = DateTime.Now,
+                DateOfOperation = DateTime.Now,
                 ProductDetails = new List<PurchaseProductDetail>
             {
-                new PurchaseProductDetail { ProductId = prodCmd1.ProductId, Quantity = 3 },
+                new PurchaseProductDetail { ProductId = prodCmd1.ProductId,  Quantity = 3 },
                 new PurchaseProductDetail { ProductId = prodCmd2.ProductId, Quantity = 4 }
             }
             };
@@ -178,6 +184,8 @@ namespace PaymentGateway
             };
             //var handler = serviceProvider.GetRequiredService<ListOfAccounts.QueryHandler>();
             var result = await mediator.Send(query, cancellationToken);
+
+            database.SaveChanges();
         }
     }
 }

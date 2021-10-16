@@ -12,31 +12,29 @@ namespace PaymentGateway.Application.CommandHandlers
 {
     public class CreateAccountOperation : IRequestHandler<CreateAccountCommand>
     {
-        private readonly Database _database;
+        private readonly PaymentDbContext _dbContext;
         private readonly IMediator _mediator;
         private readonly AccountOptions _accountOptions;
 
-        public CreateAccountOperation(IMediator mediator, AccountOptions accountOptions, Database database)
+        public CreateAccountOperation(IMediator mediator, AccountOptions accountOptions, PaymentDbContext dbContext)
         {
             _mediator = mediator;
             _accountOptions = accountOptions;
-            _database = database;
+            _dbContext = dbContext;
         }
 
         public async Task<Unit> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
         {
-            //Database database = Database.GetInstance();
-
             Account account = new();
             Person person;
 
             if (request.PersonId.HasValue)
             {
-                person = _database.Persons.FirstOrDefault(x => x.Id == request.PersonId);
+                person = _dbContext.Persons.FirstOrDefault(x => x.Id == request.PersonId);
             }
             else
             {
-                person = _database.Persons?.FirstOrDefault(x => x.Cnp == request.Cnp);
+                person = _dbContext.Persons?.FirstOrDefault(x => x.Cnp == request.Cnp);
             }
             if (person == null)
             {
@@ -45,12 +43,11 @@ namespace PaymentGateway.Application.CommandHandlers
 
             account.PersonId = person.Id;
 
-
             account.Balance = _accountOptions.InitialBalance;
             account.Currency = request.Currency;
-            account.IbanCode = request.IBanCode;
+            account.Iban = request.Iban;
             account.Status = AccountStatus.Active;
-
+            account.Limit = 100000;
 
             if (request.Type == "Current")
             {
@@ -68,13 +65,12 @@ namespace PaymentGateway.Application.CommandHandlers
             {
                 throw new Exception("Unsupported account type");
             }
-            _database.Accounts.Add(account);
+            _dbContext.Accounts.Add(account);
 
-
-            AccountCreated accoutCreated = new(request.IBanCode, request.Type, request.Status.ToString());
+            AccountCreated accoutCreated = new(request.Iban, request.Type, request.Status.ToString());
             await _mediator.Publish(accoutCreated, cancellationToken);
 
-            Database.SaveChanges();
+            _dbContext.SaveChanges();
             return Unit.Value;
         }
     }

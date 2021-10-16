@@ -5,10 +5,10 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MediatR" Version="$(MediatRPackageVersion)" />
-	</ItemGroup>
-
-	<ItemGroup>
+    <PackageReference Include="MediatR" Version="$(MediatRPackageVersion)" />
+  </ItemGroup>
+	
+  <ItemGroup>
     <ProjectReference Include="..\PaymentGateway.Models\PaymentGateway.Models.csproj" />
   </ItemGroup>
 
