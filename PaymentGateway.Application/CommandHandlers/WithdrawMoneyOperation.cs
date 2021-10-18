@@ -43,11 +43,16 @@ namespace PaymentGateway.Application.CommandHandlers
                 throw new Exception("Cannot withdraw money");
             }
 
+            if (!String.IsNullOrEmpty(request.Currency))
+            {
+                account = _dbContext.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
+            }
+
             Transaction transaction = new()
             {
                 Currency = request.Currency,
                 Amount = -request.Amount,
-                Type = TransactionType.Withdraw,
+                Type = (int)TransactionType.Withdraw,
                 Date = request.DateOfTransaction,
                 AccountId = account.Id
             };

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentGateway.Application.Services;
+using PaymentGateway.Data;
 using static PaymentGateway.Application.Queries.ListOfAccounts;
 
 
@@ -19,7 +20,7 @@ namespace PaymentGateway.Application
             
             services.AddSingleton<NewIban>();
 
-            services.AddSingleton<Data.PaymentDbContext>();
+            services.AddSingleton<PaymentDbContext>();
 
             services.AddTransient<QueryHandler>();
 

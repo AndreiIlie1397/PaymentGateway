@@ -42,6 +42,18 @@ namespace PaymentGateway.Application.CommandHandlers
                 throw new Exception("Account not found");
             }
 
+            Transaction transaction = new()
+            {
+                Currency = request.Currency,
+                //Amount = -totalAmount,
+                Type = (int)TransactionType.PurchaseService,
+                Date = request.DateOfTransaction,
+                AccountId = account.Id
+            };
+            _dbContext.Transactions.Add(transaction);
+            _dbContext.SaveChanges();
+
+
             foreach (var item in request.ProductDetails)
             {
                 product = _dbContext.Products.FirstOrDefault(x => x.Id == item.ProductId);
@@ -62,30 +74,21 @@ namespace PaymentGateway.Application.CommandHandlers
                     throw new Exception("You have insufficient funds!");
                 }
 
-                //ProductXTransaction productXTransaction = new()
-                //{
-                //    TransactionId = item.TransactionId,
-                //    ProductId = item.ProductId,
-                //    Quantity = item.Quantity
-                //};
+                ProductXtransaction productXTransaction = new()
+                {
+                    TransactionId = item.TransactionId,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity
+                };
 
-                //_dbContext.ProductXTransactions.Add(productXTransaction);
+                _dbContext.ProductXtransactions.Add(productXTransaction);
+                _dbContext.SaveChanges();
 
-                
-                account.Balance -= totalAmount;
                 product.Limit -= item.Quantity;
-  
-            }
-            Transaction transaction = new()
-            {
-                Currency = request.Currency,
-                Amount = -totalAmount,
-                Type = TransactionType.PurchaseService,
-                Date = request.DateOfTransaction,
-                AccountId = account.Id
-            };
 
-            _dbContext.Transactions.Add(transaction);
+            }
+            account.Balance -= totalAmount;
+            transaction.Amount = -totalAmount;
 
             ProductPurchased eventProductPurchased = new() { ProductDetails = request.ProductDetails };
             await _mediator.Publish(eventProductPurchased, cancellationToken);

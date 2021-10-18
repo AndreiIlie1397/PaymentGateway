@@ -24,6 +24,9 @@ namespace PaymentGateway
         static async Task Main(string[] args)
         {
 
+            var iban = Guid.NewGuid().ToString();
+            var cnp = Guid.NewGuid().ToString().Substring(0, 13);
+
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -63,25 +66,23 @@ namespace PaymentGateway
             var mediator = serviceProvider.GetRequiredService<IMediator>();
 
             //use
-           EnrollCustomerCommand command = new()
-           {
-               Name = "Ilie Andrei",
-               UniqueIdentifier = Guid.NewGuid().ToString(),
-               ClientType = "Individual",
-               //AccountType = "Current"
-               Currency = "RON"
-           };
+            EnrollCustomerCommand command = new()
+            {
+                Name = "Ilie Andrei",
+                UniqueIdentifier = Guid.NewGuid().ToString(),
+                ClientType = "Individual",
+                Currency = "RON"
+            };
 
-            //var client = serviceProvider.GetRequiredService<EnrollCustomerOperation>();
             await mediator.Send(command, cancellationToken);
 
             CreateAccountCommand account = new()
             {
                 PersonId = 1,
                 Currency = "RON",
-                Cnp = Guid.NewGuid().ToString(),
+                Cnp = cnp,
                 Type = "Current",
-                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString()
+                Iban = iban
             };
 
             services.AddSingleton<AccountOptions>(sp =>
@@ -94,95 +95,89 @@ namespace PaymentGateway
                 return options;
             });
 
-            // CreateAccountOperation acc = serviceProvider.GetRequiredService<CreateAccountOperation>();
             await mediator.Send(account, cancellationToken);
 
             DepositMoneyCommand deposit = new()
             {
-                // deposit.AccountId = 0;
                 Currency = "RON",
-                Amount = 1001,
-                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                Amount = 101,
+                Iban = iban,
                 DateOfTransaction = DateTime.Now,
                 DateOfOperation = DateTime.Now
             };
 
-            //DepositMoneyOperation dep = serviceProvider.GetRequiredService<DepositMoneyOperation>();
-           await mediator.Send(deposit, cancellationToken);
+            await mediator.Send(deposit, cancellationToken);
 
             WithdrawMoneyCommand withdraw = new()
             {
-                Name = "Ilie Andrei",
                 Currency = "RON",
                 Amount = 99,
-                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                Iban = iban,
                 DateOfTransaction = DateTime.Now,
                 DateOfOperation = DateTime.Now
             };
 
-            //WithdrawMoneyOperation wit = serviceProvider.GetRequiredService<WithdrawMoneyOperation>();
             await mediator.Send(withdraw, cancellationToken);
 
             CreateProductCommand prod1cmd = new()
             {
-                Name = "carte",
-                Value = 10,
+                Name = "pix",
+                Value = 2,
                 Currency = "RON",
                 Limit = 100
             };
 
-            //CreateProductOperation p1 = serviceProvider.GetRequiredService<CreateProductOperation>();
-                await mediator.Send(prod1cmd, cancellationToken);
+            await mediator.Send(prod1cmd, cancellationToken);
 
             CreateProductCommand prod2cmd = new()
             {
-                Name = "caiet",
-                Value = 5,
+                Name = "creion",
+                Value = 1,
                 Currency = "RON",
                 Limit = 100
             };
 
-            //CreateProductOperation p2 = serviceProvider.GetRequiredService<CreateProductOperation>();
             await mediator.Send(prod2cmd, cancellationToken);
 
             var listProducts = new List<PurchaseProductDetail>();
             var prodCmd1 = new PurchaseProductDetail
             {
-                ProductId = 1,
+                TransactionId = 3,
+                ProductId = 3,
                 Quantity = 3
             };
 
-            listProducts.Add(prodCmd1);
+           listProducts.Add(prodCmd1);
 
             var prodCmd2 = new PurchaseProductDetail
             {
-                ProductId = 2,
-                Quantity = 3
+                TransactionId = 3,
+                ProductId = 4,
+                Quantity = 4
             };
 
-            listProducts.Add(prodCmd2);
+           listProducts.Add(prodCmd2);
 
             PurchaseProductCommand purchase = new()
             {
-                Iban = (Int64.Parse(ibanService.GetNewIban()) - 1).ToString(),
+                Iban = iban,
                 Currency = "RON",
                 DateOfTransaction = DateTime.Now,
                 DateOfOperation = DateTime.Now,
                 ProductDetails = new List<PurchaseProductDetail>
             {
-                new PurchaseProductDetail { ProductId = prodCmd1.ProductId,  Quantity = 3 },
-                new PurchaseProductDetail { ProductId = prodCmd2.ProductId, Quantity = 4 }
+                new PurchaseProductDetail { ProductId = prodCmd1.ProductId, TransactionId=prodCmd1.TransactionId, Quantity = 3 },
+                new PurchaseProductDetail { ProductId = prodCmd2.ProductId, TransactionId=prodCmd2.TransactionId, Quantity = 4 }
             }
             };
 
-            //PurchaseProductOperation purchaseProd = serviceProvider.GetRequiredService<PurchaseProductOperation>();
             await mediator.Send(purchase, cancellationToken);
 
             var query = new ListOfAccounts.Query
             {
                 PersonId = 1
             };
-            //var handler = serviceProvider.GetRequiredService<ListOfAccounts.QueryHandler>();
+
             var result = await mediator.Send(query, cancellationToken);
 
             database.SaveChanges();

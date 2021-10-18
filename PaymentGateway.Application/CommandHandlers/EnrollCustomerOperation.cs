@@ -6,6 +6,7 @@ using System;
 using MediatR;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Linq;
 
 namespace PaymentGateway.Application.CommandHandlers
 {
@@ -32,11 +33,11 @@ namespace PaymentGateway.Application.CommandHandlers
 
             if (request.ClientType == "Company")
             {
-                person.Type = PersonType.Company;
+                person.Type = (int)PersonType.Company;
             }
             else if (request.ClientType == "Individual")
             {
-                person.Type = PersonType.Individual;
+                person.Type = (int)PersonType.Individual;
             }
             else
             {

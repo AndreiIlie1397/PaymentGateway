@@ -48,16 +48,16 @@ namespace PaymentGateway.Application.CommandHandlers
                 account = _dbContext.Accounts.FirstOrDefault(x => x.Currency == request.Currency);
             }
 
-            account.Balance += request.Amount;
-
             Transaction transaction = new()
             {
                 Currency = request.Currency,
                 Amount = request.Amount,
-                Type = TransactionType.Deposit,
+                Type = (int)TransactionType.Deposit,
                 Date = request.DateOfTransaction,
                 AccountId = account.Id
             };
+
+            account.Balance += request.Amount;
 
             _dbContext.Transactions.Add(transaction);
 

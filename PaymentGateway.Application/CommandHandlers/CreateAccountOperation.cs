@@ -46,20 +46,20 @@ namespace PaymentGateway.Application.CommandHandlers
             account.Balance = _accountOptions.InitialBalance;
             account.Currency = request.Currency;
             account.Iban = request.Iban;
-            account.Status = AccountStatus.Active;
+            account.Status = (int)AccountStatus.Active;
             account.Limit = 100000;
 
             if (request.Type == "Current")
             {
-                account.Type = AccountType.Current;
+                account.Type = (int)AccountType.Current;
             }
             else if (request.Type == "Economy")
             {
-                account.Type = AccountType.Economy;
+                account.Type = (int)AccountType.Economy;
             }
             else if (request.Type == "Investment")
             {
-                account.Type = AccountType.Investment;
+                account.Type = (int)AccountType.Investment;
             }
             else
             {

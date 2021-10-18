@@ -130,7 +130,7 @@ _database
             public string IbanCode { get; set; }
             public AccountType Type { get; set; }
             public AccountStatus Status { get; set; }
-            public decimal Limit { get; set; }
+            public decimal? Limit { get; set; }
         }
     }
 }
